@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # 1. Microservicio de IA (Python FastAPI)
+  ml-service:
+    build:
+      context: ./ml-service
+      dockerfile: Dockerfile
+    container_name: ml-service
+    ports:
+      - "8000:8000"
+    networks:
+      - energia-net
+    healthcheck:
+      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/docs')" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # 2. Microservicio Principal (Java Spring Boot 3)
+  backend-api:
+    build:
+      context: ./backend          # <--- ¡CORREGIDO AQUÍ! (Antes decía .)
+      dockerfile: Dockerfile
+    container_name: backend-api
+    ports:
+      - "8080:8080"
+    environment:
+      - ML_SERVICE_URL=http://ml-service:8000/predict
+    depends_on:
+      ml-service:
+        condition: service_healthy
+    networks:
+      - energia-net
+    restart: unless-stopped
+
+  # 3. Frontend (Interfaz Web con Nginx)
+  frontend-app:
+    build:
+      context: ./frontend-app
+      dockerfile: Dockerfile
+    container_name: frontend-energia
+    ports:
+      - "3000:80"
+    networks:
+      - energia-net
+    depends_on:
+      - backend-api
+    restart: unless-stopped
+
+networks:
+  energia-net:
+    driver: bridge

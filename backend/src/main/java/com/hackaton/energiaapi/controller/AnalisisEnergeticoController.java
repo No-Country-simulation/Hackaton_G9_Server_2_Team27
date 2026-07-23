@@ -1,6 +1,7 @@
 package com.hackaton.energiaapi.controller;
 
 import com.hackaton.energiaapi.dto.AnalisisRequestDTO;
+import com.hackaton.energiaapi.dto.AnalisisResponseDTO;
 import com.hackaton.energiaapi.entity.AnalisisEnergetico;
 import com.hackaton.energiaapi.service.AnalisisEnergeticoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,8 +36,8 @@ public class AnalisisEnergeticoController {
             @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos o incompletos"),
             @ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
-    public ResponseEntity<AnalisisEnergetico> realizarAnalisis(@Valid @RequestBody AnalisisRequestDTO request) {
-        AnalisisEnergetico response = analisisEnergeticoService.procesarAnalisis(request);
+    public ResponseEntity<AnalisisResponseDTO> realizarAnalisis(@Valid @RequestBody AnalisisRequestDTO request) {
+        AnalisisResponseDTO response = analisisEnergeticoService.procesarAnalisis(request);
         return ResponseEntity.ok(response);
     }
 

@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EnergiAI – Diagnóstico de Eficiencia Energética | Hackathon ONE G9</title>
+    <meta name="description" content="Herramienta de análisis de consumo energético impulsada por Machine Learning. Hackathon ONE Alura + Oracle G9.">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* =========================================================
+           DESIGN TOKENS – Paleta corporativa ecológica
+        ========================================================= */
+        :root {
+            --primary:      #1a6b4a;   /* verde bosque */
+            --primary-dark: #124e36;
+            --primary-light:#e8f5ef;
+            --accent:       #0d3b6e;   /* azul oscuro */
+            --warning-eco:  #e07b00;
+            --danger-eco:   #c0392b;
+            --success-eco:  #1a6b4a;
+            --neutral-100:  #f5f7f6;
+            --neutral-200:  #e9eceb;
+            --neutral-700:  #4a5568;
+            --neutral-900:  #1a202c;
+            --white:        #ffffff;
+            --radius-card:  1rem;
+            --shadow-card:  0 4px 24px rgba(0,0,0,0.07);
+            --transition:   0.25s ease;
+        }
+
+        /* =========================================================
+           BASE
+        ========================================================= */
+        *, *::before, *::after { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background-color: var(--neutral-100);
+            color: var(--neutral-900);
+            min-height: 100vh;
+        }
+
+        /* =========================================================
+           NAVBAR / HERO
+        ========================================================= */
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 60%, #2ecc71 100%);
+            color: var(--white);
+            padding: 2.5rem 0 3rem;
+            clip-path: ellipse(110% 100% at 50% 0%);
+            margin-bottom: 2.5rem;
+        }
+
+        .hero-section .badge-hackathon {
+            background: rgba(255,255,255,0.18);
+            border: 1px solid rgba(255,255,255,0.3);
+            backdrop-filter: blur(6px);
+            color: var(--white);
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+            padding: 0.35rem 0.85rem;
+            border-radius: 999px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .hero-section h1 {
+            font-size: clamp(1.6rem, 4vw, 2.4rem);
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .hero-section p.lead {
+            opacity: 0.88;
+            font-weight: 400;
+            font-size: 1rem;
+        }
+
+        /* =========================================================
+           CARDS
+        ========================================================= */
+        .card {
+            border: 1px solid var(--neutral-200);
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow-card);
+            transition: transform var(--transition), box-shadow var(--transition);
+            background: var(--white);
+        }
+
+        .card:hover { transform: translateY(-3px); box-shadow: 0 8px 32px rgba(0,0,0,0.10); }
+
+        .card-header {
+            background: var(--white);
+            border-bottom: 1.5px solid var(--neutral-200);
+            font-weight: 600;
+            border-top-left-radius: var(--radius-card) !important;
+            border-top-right-radius: var(--radius-card) !important;
+            padding: 1.1rem 1.4rem;
+        }
+
+        .card-header .section-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--neutral-700);
+        }
+
+        /* =========================================================
+           FORM
+        ========================================================= */
+        .form-label {
+            font-weight: 500;
+            font-size: 0.82rem;
+            color: var(--neutral-700);
+            margin-bottom: 0.3rem;
+            letter-spacing: 0.02em;
+        }
+
+        .form-control, .form-select {
+            border-radius: 0.5rem;
+            padding: 0.65rem 0.85rem;
+            border: 1.5px solid var(--neutral-200);
+            font-size: 0.9rem;
+            color: var(--neutral-900);
+            transition: border-color var(--transition), box-shadow var(--transition);
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(26,107,74,0.15);
+            outline: none;
+        }
+
+        .input-group-text {
+            background: var(--neutral-100);
+            border: 1.5px solid var(--neutral-200);
+            color: var(--primary);
+            font-size: 0.9rem;
+        }
+
+        /* =========================================================
+           SUBMIT BUTTON
+        ========================================================= */
+        #submitBtn {
+            background: linear-gradient(135deg, var(--primary), #2ecc71);
+            border: none;
+            border-radius: 0.6rem;
+            padding: 0.8rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--white);
+            letter-spacing: 0.02em;
+            transition: all var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        #submitBtn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(255,255,255,0);
+            transition: background var(--transition);
+        }
+
+        #submitBtn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(26,107,74,0.35);
+        }
+
+        #submitBtn:disabled {
+            opacity: 0.75;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* =========================================================
+           RESULTADO – EMPTY STATE
+        ========================================================= */
+        .empty-state-icon {
+            font-size: 3.5rem;
+            color: var(--neutral-200);
+        }
+
+        /* =========================================================
+           RESULTADO – CATEGORIA BADGE
+        ========================================================= */
+        .categoria-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.55rem 1.25rem;
+            border-radius: 999px;
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+        }
+
+        .categoria-badge.eficiente  { background: #d4edda; color: var(--success-eco); }
+        .categoria-badge.moderado   { background: #fff3cd; color: var(--warning-eco); }
+        .categoria-badge.ineficiente{ background: #f8d7da; color: var(--danger-eco); }
+
+        /* =========================================================
+           RESULTADO – MÉTRICAS
+        ========================================================= */
+        .metric-card {
+            background: var(--neutral-100);
+            border-radius: 0.75rem;
+            padding: 1rem 1.2rem;
+            border-left: 4px solid var(--primary);
+        }
+
+        .metric-card.cost { border-left-color: var(--accent); }
+
+        .metric-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--neutral-700);
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-value {
+            font-size: 1.55rem;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+
+        .metric-value.cost { color: var(--accent); }
+
+        /* =========================================================
+           RESULTADO – BARRA DE PROBABILIDAD
+        ========================================================= */
+        .prob-track {
+            height: 10px;
+            border-radius: 999px;
+            background: var(--neutral-200);
+            overflow: hidden;
+        }
+
+        .prob-fill {
+            height: 100%;
+            border-radius: 999px;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* =========================================================
+           RESULTADO – RECOMENDACIONES
+        ========================================================= */
+        .rec-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.8rem 1rem;
+            background: var(--neutral-100);
+            border-radius: 0.6rem;
+            margin-bottom: 0.6rem;
+            font-size: 0.85rem;
+            color: var(--neutral-700);
+            border: 1px solid var(--neutral-200);
+            transition: background var(--transition);
+        }
+
+        .rec-item:hover { background: var(--primary-light); border-color: rgba(26,107,74,0.2); }
+
+        .rec-icon {
+            flex-shrink: 0;
+            margin-top: 1px;
+            color: var(--primary);
+            font-size: 0.9rem;
+        }
+
+        /* =========================================================
+           ERROR ALERT
+        ========================================================= */
+        .error-box {
+            background: #fff5f5;
+            border: 1px solid #fed7d7;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--danger-eco);
+        }
+
+        /* =========================================================
+           FOOTER
+        ========================================================= */
+        footer {
+            background: var(--accent);
+            color: rgba(255,255,255,0.65);
+            font-size: 0.78rem;
+            padding: 1rem 0;
+            text-align: center;
+        }
+
+        footer strong { color: var(--white); }
+
+        /* =========================================================
+           SPINNER OVERRIDE
+        ========================================================= */
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+            border-width: 0.15em;
+        }
+
+        /* =========================================================
+           RESPONSIVE TWEAKS
+        ========================================================= */
+        @media (max-width: 576px) {
+            .hero-section { clip-path: none; padding: 2rem 0 2.5rem; }
+            .metric-value { font-size: 1.25rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ======== HERO ======== -->
+    <header class="hero-section text-center">
+        <div class="container">
+            <span class="badge-hackathon mb-3 d-inline-block">
+                <i class="fa-solid fa-award me-1"></i> Hackathon ONE · Alura + Oracle · G9
+            </span>
+            <h1 class="mt-2 mb-2">
+                <i class="fa-solid fa-bolt me-2" style="color:#f9ca24;"></i>EnergiAI
+            </h1>
+            <p class="lead mb-0">Diagnóstico inteligente de consumo energético impulsado por Machine Learning.</p>
+        </div>
+    </header>
+
+    <!-- ======== MAIN ======== -->
+    <main class="container mb-5">
+        <div class="row g-4 align-items-start">
+
+            <!-- ====== FORMULARIO ====== -->
+            <div class="col-lg-5">
+                <div class="card">
+                    <div class="card-header d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-sliders" style="color:var(--primary);"></i>
+                        <span class="section-title">Datos del inmueble</span>
+                    </div>
+                    <div class="card-body p-4">
+                        <form id="energiaForm" novalidate>
+
+                            <!-- Consumo kWh -->
+                            <div class="mb-3">
+                                <label for="consumoKwh" class="form-label">Consumo mensual (kWh)</label>
+                                <div class="input-group">
+                                    <input type="number" step="0.01" min="0.01" class="form-control"
+                                           id="consumoKwh" required placeholder="Ej: 420">
+                                    <span class="input-group-text"><i class="fa-solid fa-plug"></i></span>
+                                </div>
+                            </div>
+
+                            <!-- Uso Horario Pico -->
+                            <div class="mb-3">
+                                <label for="usoHorarioPico" class="form-label">Uso en horario pico</label>
+                                <select class="form-select" id="usoHorarioPico" required>
+                                    <option value="true">Sí – Uso intensivo (18 hs – 22 hs)</option>
+                                    <option value="false">No – Uso moderado / fuera de pico</option>
+                                </select>
+                            </div>
+
+                            <!-- Cantidad Equipos + Tipo Inmueble -->
+                            <div class="row g-3 mb-3">
+                                <div class="col-6">
+                                    <label for="cantidadEquipos" class="form-label">Cantidad de equipos</label>
+                                    <div class="input-group">
+                                        <input type="number" min="1" class="form-control"
+                                               id="cantidadEquipos" required placeholder="Ej: 10">
+                                        <span class="input-group-text"><i class="fa-solid fa-tv"></i></span>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <label for="horasAltoConsumo" class="form-label">Horas de alto consumo/día</label>
+                                    <div class="input-group">
+                                        <input type="number" min="0" max="24" class="form-control"
+                                               id="horasAltoConsumo" required placeholder="Ej: 8">
+                                        <span class="input-group-text"><i class="fa-solid fa-clock"></i></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tipo Inmueble -->
+                            <div class="mb-3">
+                                <label for="tipoInmueble" class="form-label">Tipo de inmueble</label>
+                                <select class="form-select" id="tipoInmueble" required>
+                                    <option value="Residencial">Residencial (Casa / Departamento)</option>
+                                    <option value="Comercial">Comercial (Oficina / Local)</option>
+                                    <option value="Industrial">Industrial (Planta / Galpón)</option>
+                                </select>
+                            </div>
+
+                            <!-- Metros cuadrados + Cantidad personas -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-6">
+                                    <label for="metrosCuadrados" class="form-label">Área (m²)</label>
+                                    <div class="input-group">
+                                        <input type="number" step="0.1" min="1" class="form-control"
+                                               id="metrosCuadrados" required placeholder="Ej: 90">
+                                        <span class="input-group-text"><i class="fa-solid fa-ruler-combined"></i></span>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <label for="cantidadPersonas" class="form-label">Ocupantes</label>
+                                    <div class="input-group">
+                                        <input type="number" min="1" class="form-control"
+                                               id="cantidadPersonas" required placeholder="Ej: 4">
+                                        <span class="input-group-text"><i class="fa-solid fa-users"></i></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="submit" class="btn" id="submitBtn">
+                                    <i class="fa-solid fa-microchip me-2"></i>Generar Diagnóstico
+                                </button>
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====== RESULTADOS ====== -->
+            <div class="col-lg-7">
+                <div class="card h-100">
+                    <div class="card-header d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-chart-bar" style="color:var(--accent);"></i>
+                        <span class="section-title">Resultados del análisis</span>
+                    </div>
+                    <div class="card-body p-4 d-flex flex-column" id="resultContainer">
+
+                        <!-- Estado vacío -->
+                        <div class="text-center my-auto py-5" id="emptyState">
+                            <i class="fa-regular fa-clipboard empty-state-icon"></i>
+                            <h6 class="text-muted mt-3 fw-semibold">Esperando datos</h6>
+                            <p class="text-muted small mb-0">
+                                Completa el formulario y presiona <strong>Generar Diagnóstico</strong>
+                                para obtener tu análisis energético con IA.
+                            </p>
+                        </div>
+
+                        <!-- Contenido de resultados -->
+                        <div id="resultsContent" class="d-none">
+
+                            <!-- 1. Categoría -->
+                            <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+                                <div>
+                                    <p class="metric-label mb-1">Categoría Energética</p>
+                                    <span class="categoria-badge" id="categoriaBadge">
+                                        <i class="fa-solid fa-circle-check" id="categoriaIcon"></i>
+                                        <span id="categoriaText">—</span>
+                                    </span>
+                                </div>
+                                <!-- Costo Estimado -->
+                                <div class="metric-card cost text-end">
+                                    <p class="metric-label mb-1">
+                                        <i class="fa-solid fa-dollar-sign me-1"></i>Costo Estimado Mensual
+                                    </p>
+                                    <div class="metric-value cost" id="costoText">—</div>
+                                </div>
+                            </div>
+
+                            <!-- 2. Probabilidad -->
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between align-items-baseline mb-2">
+                                    <p class="metric-label mb-0">Confianza del modelo (probabilidad)</p>
+                                    <span class="fw-bold small" id="probabilityText">0%</span>
+                                </div>
+                                <div class="prob-track">
+                                    <div class="prob-fill" id="probabilityBar" style="width:0%;"></div>
+                                </div>
+                            </div>
+
+                            <!-- 3. Recomendaciones -->
+                            <div>
+                                <p class="metric-label mb-2">
+                                    <i class="fa-solid fa-lightbulb me-1" style="color:var(--warning-eco);"></i>
+                                    Recomendaciones de ahorro
+                                </p>
+                                <ul class="list-unstyled mb-0" id="recommendationsList"></ul>
+                            </div>
+
+                        </div>
+
+                        <!-- Error -->
+                        <div id="errorContent" class="d-none my-auto">
+                            <div class="error-box">
+                                <i class="fa-solid fa-triangle-exclamation fa-2x mb-3 opacity-60"></i>
+                                <h6 class="fw-bold mb-1">No se pudo procesar el análisis</h6>
+                                <p class="small mb-0" id="errorText">Error de conexión con el servidor.</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- ======== FOOTER ======== -->
+    <footer>
+        <div class="container">
+            <strong>EnergiAI</strong> · Hackathon ONE G9 · Alura + Oracle &nbsp;|&nbsp;
+            Backend: <code>Spring Boot 3</code> · ML: <code>Python FastAPI</code>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- App Logic -->
+    <script src="app.js"></script>
+</body>
+</html>
