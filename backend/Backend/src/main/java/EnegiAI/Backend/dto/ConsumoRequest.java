@@ -2,6 +2,13 @@ package EnegiAI.Backend.dto;
 
 import jakarta.validation.constraints.*;
 
+/**
+ * DTO que encapsula la información de consumo energético enviada por el
+ * cliente para solicitar un análisis.
+ *
+ * Sus atributos incorporan reglas de validación mediante Bean Validation,
+ * garantizando que únicamente se procesen solicitudes con datos válidos.
+ */
 public record ConsumoRequest(
         @NotNull(message = "El consumo en kWh es obligatorio")
         @Positive(message = "El consumo en kWh debe ser mayor a cero")
