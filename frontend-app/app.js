@@ -40,6 +40,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const voteKNN = document.getElementById("voteKNN");
     const latKNN = document.getElementById("latKNN");
 
+    const voteRF = document.getElementById("voteRF");
+    const latRF = document.getElementById("latRF");
+
     const decisionText = document.getElementById("decisionText");
     const desempateBadge = document.getElementById("desempateBadge");
 
@@ -279,6 +282,14 @@ document.addEventListener("DOMContentLoaded", () => {
             voteKNN.textContent = formatVote(votos["KNN"]);
             voteKNN.className = "model-vote " + (votos["KNN"] ? votos["KNN"].toLowerCase() : "");
             document.getElementById("latKNN").textContent = formatLat(latencias?.knn_ms);
+
+            if (voteRF) {
+                voteRF.textContent = formatVote(votos["Random Forest"]);
+                voteRF.className = "model-vote " + (votos["Random Forest"] ? votos["Random Forest"].toLowerCase() : "");
+            }
+            if (latRF) {
+                latRF.textContent = formatLat(latencias?.random_forest_ms);
+            }
         }
 
         if (metodoDecision) {

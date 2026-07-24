@@ -42,8 +42,17 @@ public class AnalisisEnergeticoServiceImpl implements AnalisisEnergeticoService 
 
         // ── Llamada al servicio ML (FastAPI) ──────────────────────────────────
         try {
+            Map<String, Object> mlRequest = new java.util.HashMap<>();
+            mlRequest.put("consumoKwh", request.getConsumoKwh());
+            mlRequest.put("usoHorarioPico", request.getUsoHorarioPico());
+            mlRequest.put("cantidadEquipos", request.getCantidadEquipos());
+            mlRequest.put("tipoInmueble", request.getTipoInmueble());
+            mlRequest.put("horasAltoConsumo", request.getHorasAltoConsumo());
+            mlRequest.put("metrosCuadrados", request.getMetrosCuadrados());
+            mlRequest.put("cantidadPersonas", request.getCantidadPersonas());
+
             @SuppressWarnings("unchecked")
-            ResponseEntity<Map> responseEntity = restTemplate.postForEntity(mlServiceUrl, request, Map.class);
+            ResponseEntity<Map> responseEntity = restTemplate.postForEntity(mlServiceUrl, mlRequest, Map.class);
 
             if (responseEntity.getStatusCode().is2xxSuccessful() && responseEntity.getBody() != null) {
                 @SuppressWarnings("unchecked")
@@ -72,15 +81,23 @@ public class AnalisisEnergeticoServiceImpl implements AnalisisEnergeticoService 
                     }
                     if (detallesMap.containsKey("latencias_ms")) {
                         @SuppressWarnings("unchecked")
-                        Map<String, Double> latencias = (Map<String, Double>) detallesMap.get("latencias_ms");
-                        latenciasMs = latencias;
+                        Map<String, ?> latencias = (Map<String, ?>) detallesMap.get("latencias_ms");
+                        Map<String, Double> latenciasValidas = new java.util.HashMap<>();
+                        if (latencias != null) {
+                            latencias.forEach((k, v) -> {
+                                if (v instanceof Number num) {
+                                    latenciasValidas.put(k, num.doubleValue());
+                                }
+                            });
+                        }
+                        latenciasMs = latenciasValidas;
                     }
                 }
 
                 log.info("[ML] Categoría: {} | Probabilidad: {} | Método: {}", categoria, probabilidad, metodoDecision);
             }
         } catch (Exception e) {
-            log.warn("[EnergiAI] Fallo de comunicación con ML-service ({}); ejecutando fallback local.", e.getMessage());
+            log.warn("[EnergiAI] Fallo de comunicación con ML-service ({}); ejecutando fallback local. Error: {}", e.getMessage(), e);
             categoria = determinarCategoria(request.getConsumoKwh());
             probabilidad = 0.88;
             metodoDecision = "Lógica de Fallback Local";

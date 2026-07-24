@@ -13,6 +13,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiamos el resto del código (modelo, scripts, etc.)
 COPY . .
 
+# Copiamos los archivos .pkl de la carpeta modelos directamente al working directory
+COPY modelos/*.pkl ./
+
 # Exponemos el puerto de FastAPI
 EXPOSE 8000
 
