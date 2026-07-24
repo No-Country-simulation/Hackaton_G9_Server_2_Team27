@@ -20,18 +20,20 @@ services:
   # 2. Microservicio Principal (Java Spring Boot 3)
   backend-api:
     build:
-      context: ./backend          # <--- ¡CORREGIDO AQUÍ! (Antes decía .)
+      context: ./backend # <--- ¡CORREGIDO AQUÍ! (Antes decía .)
       dockerfile: Dockerfile
     container_name: backend-api
     ports:
       - "8080:8080"
     environment:
-      - ML_SERVICE_URL=http://ml-service:8000/predict/compare
+      - ML_SERVICE_URL=http://ml-service:8000/analisis-energetico
     depends_on:
       ml-service:
         condition: service_healthy
     networks:
       - energia-net
+    volumes:
+      - ./backend/data:/app/data
     restart: unless-stopped
 
   # 3. Frontend (Interfaz Web con Nginx)

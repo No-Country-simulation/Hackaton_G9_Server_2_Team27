@@ -1,0 +1,14 @@
+com/hackaton/energiaapi/dto/AnalisisResponseDTO$DetallesDTO$DetallesDTOBuilder.class
+com/hackaton/energiaapi/exception/GlobalExceptionHandler.class
+com/hackaton/energiaapi/dto/AnalisisRequestDTO.class
+com/hackaton/energiaapi/entity/AnalisisEnergetico$AnalisisEnergeticoBuilder.class
+com/hackaton/energiaapi/service/AnalisisEnergeticoServiceImpl.class
+com/hackaton/energiaapi/repository/AnalisisEnergeticoRepository.class
+com/hackaton/energiaapi/EnergiaApiApplication.class
+com/hackaton/energiaapi/service/AnalisisEnergeticoService.class
+com/hackaton/energiaapi/entity/AnalisisEnergetico.class
+com/hackaton/energiaapi/dto/AnalisisResponseDTO$AnalisisResponseDTOBuilder.class
+com/hackaton/energiaapi/controller/AnalisisEnergeticoController.class
+com/hackaton/energiaapi/dto/AnalisisResponseDTO$DetallesDTO.class
+com/hackaton/energiaapi/dto/AnalisisRequestDTO$AnalisisRequestDTOBuilder.class
+com/hackaton/energiaapi/dto/AnalisisResponseDTO.class

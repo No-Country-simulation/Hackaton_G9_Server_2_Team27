@@ -3,667 +3,1022 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EnergiAI – Diagnóstico de Eficiencia Energética | Hackathon ONE G9</title>
-    <meta name="description" content="Herramienta de análisis de consumo energético impulsada por Machine Learning. Hackathon ONE Alura + Oracle G9.">
+    <title>EnergiAI – Enterprise Energy Analytics Dashboard | Hackathon ONE G9</title>
+    <meta name="description" content="Dashboard de análisis de consumo energético con IA. Hackathon ONE Alura + Oracle G9.">
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* =========================================================
-           DESIGN TOKENS – Paleta corporativa ecológica
+           DESIGN SYSTEM – ENTERPRISE SAAS DARK THEME
         ========================================================= */
         :root {
-            --primary:      #1a6b4a;   /* verde bosque */
-            --primary-dark: #124e36;
-            --primary-light:#e8f5ef;
-            --accent:       #0d3b6e;   /* azul oscuro */
-            --warning-eco:  #e07b00;
-            --danger-eco:   #c0392b;
-            --success-eco:  #1a6b4a;
-            --neutral-100:  #f5f7f6;
-            --neutral-200:  #e9eceb;
-            --neutral-700:  #4a5568;
-            --neutral-900:  #1a202c;
-            --white:        #ffffff;
-            --radius-card:  1rem;
-            --shadow-card:  0 4px 24px rgba(0,0,0,0.07);
-            --transition:   0.25s ease;
+            --bg-main:       #0f172a;   /* Slate 900 */
+            --bg-card:       #1e293b;   /* Slate 800 */
+            --bg-input:      #0f172a;
+            --border-color:  #334155;   /* Slate 700 */
+            --border-hover:  #475569;   /* Slate 600 */
+            --text-primary:  #f8fafc;   /* Slate 50 */
+            --text-secondary:#94a3b8;   /* Slate 400 */
+            --text-muted:    #64748b;   /* Slate 500 */
+            
+            /* Accents */
+            --primary:       #10b981;   /* Emerald 500 */
+            --primary-glow:  rgba(16, 185, 129, 0.15);
+            --accent:        #06b6d4;   /* Cyan 500 */
+            --accent-glow:   rgba(6, 182, 212, 0.15);
+            
+            /* Semantics */
+            --success:       #10b981;
+            --warning:       #f59e0b;   /* Amber 500 */
+            --danger:        #ef4444;   /* Red 500 */
+            
+            --radius-lg:     0.75rem;
+            --radius-md:     0.5rem;
+            --transition:    0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --font-main:     'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
-
-        /* =========================================================
-           BASE
-        ========================================================= */
-        *, *::before, *::after { box-sizing: border-box; }
 
         body {
-            font-family: 'Inter', 'Segoe UI', sans-serif;
-            background-color: var(--neutral-100);
-            color: var(--neutral-900);
+            font-family: var(--font-main);
+            background-color: var(--bg-main);
+            color: var(--text-primary);
             min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Scrollbar custom */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-main);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: var(--radius-md);
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--border-hover);
         }
 
         /* =========================================================
-           NAVBAR / HERO
+           HEADER / NAVIGATION
         ========================================================= */
-        .hero-section {
-            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 60%, #2ecc71 100%);
-            color: var(--white);
-            padding: 2.5rem 0 3rem;
-            clip-path: ellipse(110% 100% at 50% 0%);
-            margin-bottom: 2.5rem;
+        .app-header {
+            background-color: var(--bg-card);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.85rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(12px);
+            background-opacity: 0.95;
         }
 
-        .hero-section .badge-hackathon {
-            background: rgba(255,255,255,0.18);
-            border: 1px solid rgba(255,255,255,0.3);
-            backdrop-filter: blur(6px);
-            color: var(--white);
-            font-size: 0.72rem;
-            letter-spacing: 0.08em;
-            padding: 0.35rem 0.85rem;
-            border-radius: 999px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .hero-section h1 {
-            font-size: clamp(1.6rem, 4vw, 2.4rem);
+        .brand-logo {
+            font-size: 1.25rem;
             font-weight: 700;
-            letter-spacing: -0.5px;
-        }
-
-        .hero-section p.lead {
-            opacity: 0.88;
-            font-weight: 400;
-            font-size: 1rem;
-        }
-
-        /* =========================================================
-           CARDS
-        ========================================================= */
-        .card {
-            border: 1px solid var(--neutral-200);
-            border-radius: var(--radius-card);
-            box-shadow: var(--shadow-card);
-            transition: transform var(--transition), box-shadow var(--transition);
-            background: var(--white);
-        }
-
-        .card:hover { transform: translateY(-3px); box-shadow: 0 8px 32px rgba(0,0,0,0.10); }
-
-        .card-header {
-            background: var(--white);
-            border-bottom: 1.5px solid var(--neutral-200);
-            font-weight: 600;
-            border-top-left-radius: var(--radius-card) !important;
-            border-top-right-radius: var(--radius-card) !important;
-            padding: 1.1rem 1.4rem;
-        }
-
-        .card-header .section-title {
-            font-size: 0.9rem;
-            font-weight: 700;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            color: var(--neutral-700);
-        }
-
-        /* =========================================================
-           FORM
-        ========================================================= */
-        .form-label {
-            font-weight: 500;
-            font-size: 0.82rem;
-            color: var(--neutral-700);
-            margin-bottom: 0.3rem;
-            letter-spacing: 0.02em;
-        }
-
-        .form-control, .form-select {
-            border-radius: 0.5rem;
-            padding: 0.65rem 0.85rem;
-            border: 1.5px solid var(--neutral-200);
-            font-size: 0.9rem;
-            color: var(--neutral-900);
-            transition: border-color var(--transition), box-shadow var(--transition);
-        }
-
-        .form-control:focus, .form-select:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(26,107,74,0.15);
-            outline: none;
-        }
-
-        .input-group-text {
-            background: var(--neutral-100);
-            border: 1.5px solid var(--neutral-200);
-            color: var(--primary);
-            font-size: 0.9rem;
-        }
-
-        /* =========================================================
-           SUBMIT BUTTON
-        ========================================================= */
-        #submitBtn {
-            background: linear-gradient(135deg, var(--primary), #2ecc71);
-            border: none;
-            border-radius: 0.6rem;
-            padding: 0.8rem;
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: var(--white);
-            letter-spacing: 0.02em;
-            transition: all var(--transition);
-            position: relative;
-            overflow: hidden;
-        }
-
-        #submitBtn::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: rgba(255,255,255,0);
-            transition: background var(--transition);
-        }
-
-        #submitBtn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 18px rgba(26,107,74,0.35);
-        }
-
-        #submitBtn:disabled {
-            opacity: 0.75;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        /* =========================================================
-           RESULTADO – EMPTY STATE
-        ========================================================= */
-        .empty-state-icon {
-            font-size: 3.5rem;
-            color: var(--neutral-200);
-        }
-
-        /* =========================================================
-           RESULTADO – CATEGORIA BADGE
-        ========================================================= */
-        .categoria-badge {
-            display: inline-flex;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
             align-items: center;
             gap: 0.5rem;
-            padding: 0.55rem 1.25rem;
-            border-radius: 999px;
-            font-size: 1rem;
-            font-weight: 700;
-            letter-spacing: 0.04em;
         }
 
-        .categoria-badge.eficiente  { background: #d4edda; color: var(--success-eco); }
-        .categoria-badge.moderado   { background: #fff3cd; color: var(--warning-eco); }
-        .categoria-badge.ineficiente{ background: #f8d7da; color: var(--danger-eco); }
-
-        /* =========================================================
-           RESULTADO – MÉTRICAS
-        ========================================================= */
-        .metric-card {
-            background: var(--neutral-100);
-            border-radius: 0.75rem;
-            padding: 1rem 1.2rem;
-            border-left: 4px solid var(--primary);
+        .brand-logo i {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
+            -webkit-background-clip: initial;
+            -webkit-text-fill-color: initial;
+            color: var(--text-primary);
+            font-size: 1.15rem;
+            padding: 0.25rem;
         }
 
-        .metric-card.cost { border-left-color: var(--accent); }
-
-        .metric-label {
+        .badge-status {
             font-size: 0.7rem;
             font-weight: 600;
-            letter-spacing: 0.1em;
+            color: var(--primary);
+            background-color: var(--primary-glow);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            padding: 0.25rem 0.65rem;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background-color: var(--primary);
+            border-radius: 50%;
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 5px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        /* =========================================================
+           CARDS & LAYOUT
+        ========================================================= */
+        .dashboard-container {
+            flex-grow: 1;
+            padding: 2rem 0;
+        }
+
+        .panel-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            transition: border-color var(--transition);
+        }
+
+        .panel-card:hover {
+            border-color: var(--border-hover);
+        }
+
+        .panel-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
             text-transform: uppercase;
-            color: var(--neutral-700);
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.75rem;
+        }
+
+        .panel-title i {
+            color: var(--accent);
+        }
+
+        /* =========================================================
+           PRESETS COMPONENT
+        ========================================================= */
+        .presets-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
+        }
+
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .preset-card {
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 0.75rem;
+            text-align: left;
+            cursor: pointer;
+            transition: all var(--transition);
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .preset-card:hover {
+            border-color: var(--border-hover);
+            background-color: rgba(30, 41, 59, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .preset-card.active {
+            border-color: var(--accent);
+            background-color: var(--accent-glow);
+            box-shadow: 0 0 12px rgba(6, 182, 212, 0.15);
+        }
+
+        .preset-card-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .preset-card-subtitle {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+        }
+
+        /* =========================================================
+           FORM CONTROLS
+        ========================================================= */
+        .form-group-custom {
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: border-color var(--transition);
+        }
+
+        .form-group-custom:focus-within {
+            border-color: var(--border-hover);
+        }
+
+        .form-label-custom {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-label-value {
+            font-weight: 700;
+            color: var(--accent);
+            font-size: 0.85rem;
+        }
+
+        .form-range {
+            height: 6px;
+            border-radius: 999px;
+            background: var(--border-color);
+        }
+
+        .form-range::-webkit-slider-thumb {
+            background: var(--accent);
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform var(--transition);
+        }
+
+        .form-range::-webkit-slider-thumb:hover {
+            transform: scale(1.25);
+        }
+
+        .form-control-custom, .form-select-custom {
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: var(--radius-md);
+            padding: 0.5rem 0.75rem;
+            font-size: 0.85rem;
+            width: 100%;
+            transition: border-color var(--transition);
+        }
+
+        .form-control-custom:focus, .form-select-custom:focus {
+            border-color: var(--accent);
+            outline: none;
+            box-shadow: 0 0 0 2px var(--accent-glow);
+        }
+
+        /* Modern Switch */
+        .switch-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            margin-bottom: 1.5rem;
+        }
+
+        .switch-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+        }
+
+        .switch-description {
+            font-size: 0.68rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        .form-switch-custom {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 22px;
+        }
+
+        .form-switch-custom input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .switch-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border-color);
+            transition: var(--transition);
+            border-radius: 999px;
+        }
+
+        .switch-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: var(--text-primary);
+            transition: var(--transition);
+            border-radius: 50%;
+        }
+
+        input:checked + .switch-slider {
+            background-color: var(--accent);
+        }
+
+        input:checked + .switch-slider:before {
+            transform: translateX(22px);
+        }
+
+        .btn-submit-dashboard {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
+            border: none;
+            border-radius: var(--radius-md);
+            padding: 0.85rem;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--bg-main);
+            transition: all var(--transition);
+            box-shadow: 0 4px 14px rgba(6, 182, 212, 0.25);
+        }
+
+        .btn-submit-dashboard:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(6, 182, 212, 0.4);
+            opacity: 0.95;
+        }
+
+        .btn-submit-dashboard:active {
+            transform: translateY(1px);
+        }
+
+        .btn-submit-dashboard:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* =========================================================
+           RESULTS SECTION
+        ========================================================= */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            min-height: 350px;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 2.75rem;
+            background: linear-gradient(135deg, var(--border-color) 0%, var(--border-hover) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1.25rem;
+        }
+
+        .empty-state-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-primary);
             margin-bottom: 0.25rem;
         }
 
-        .metric-value {
-            font-size: 1.55rem;
-            font-weight: 700;
-            line-height: 1.1;
+        .empty-state-subtitle {
+            font-size: 0.78rem;
+            max-width: 280px;
+            line-height: 1.4;
         }
 
-        .metric-value.cost { color: var(--accent); }
+        /* Diagnostics Header */
+        .diagnostic-header {
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
 
-        /* =========================================================
-           RESULTADO – BARRA DE PROBABILIDAD
-        ========================================================= */
-        .prob-track {
-            height: 10px;
+        .diag-badge-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .diag-label {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+        }
+
+        .diagnostic-badge-premium {
+            font-size: 1rem;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            padding: 0.45rem 1.15rem;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            text-transform: uppercase;
+        }
+
+        .diagnostic-badge-premium.eficiente {
+            background-color: rgba(16, 185, 129, 0.12);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+        }
+
+        .diagnostic-badge-premium.moderado {
+            background-color: rgba(245, 158, 11, 0.12);
+            color: var(--warning);
+            border: 1px solid rgba(245, 158, 11, 0.25);
+        }
+
+        .diagnostic-badge-premium.ineficiente {
+            background-color: rgba(239, 68, 68, 0.12);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+        }
+
+        /* Confidence bar */
+        .confidence-container {
+            width: 100%;
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .confidence-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .confidence-track {
+            height: 8px;
+            background-color: var(--border-color);
             border-radius: 999px;
-            background: var(--neutral-200);
             overflow: hidden;
         }
 
-        .prob-fill {
+        .confidence-fill {
             height: 100%;
             border-radius: 999px;
-            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(90deg, var(--accent) 0%, var(--primary) 100%);
+            transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            width: 0%;
         }
 
-        /* =========================================================
-           RESULTADO – RECOMENDACIONES
-        ========================================================= */
-        .rec-item {
+        /* Metric Grid */
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .metric-card-premium {
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1rem;
             display: flex;
-            align-items: flex-start;
-            gap: 0.75rem;
-            padding: 0.8rem 1rem;
-            background: var(--neutral-100);
-            border-radius: 0.6rem;
-            margin-bottom: 0.6rem;
-            font-size: 0.85rem;
-            color: var(--neutral-700);
-            border: 1px solid var(--neutral-200);
-            transition: background var(--transition);
+            flex-direction: column;
+            gap: 0.25rem;
         }
 
-        .rec-item:hover { background: var(--primary-light); border-color: rgba(26,107,74,0.2); }
-
-        .rec-icon {
-            flex-shrink: 0;
-            margin-top: 1px;
-            color: var(--primary);
-            font-size: 0.9rem;
+        .metric-card-label {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
         }
 
-        /* =========================================================
-           ERROR ALERT
-        ========================================================= */
-        .error-box {
-            background: #fff5f5;
-            border: 1px solid #fed7d7;
-            border-radius: 0.75rem;
-            padding: 1.5rem;
-            text-align: center;
-            color: var(--danger-eco);
+        .metric-card-label i {
+            color: var(--accent);
         }
 
-        /* =========================================================
-           FOOTER
-        ========================================================= */
-        footer {
-            background: var(--accent);
-            color: rgba(255,255,255,0.65);
-            font-size: 0.78rem;
-            padding: 1rem 0;
-            text-align: center;
+        .metric-card-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-primary);
         }
 
-        footer strong { color: var(--white); }
-
-        /* =========================================================
-           SPINNER OVERRIDE
-        ========================================================= */
-        .spinner-border-sm {
-            width: 1rem;
-            height: 1rem;
-            border-width: 0.15em;
-        }
-
-        /* =========================================================
-           RESPONSIVE TWEAKS
-        ========================================================= */
-        @media (max-width: 576px) {
-            .hero-section { clip-path: none; padding: 2rem 0 2.5rem; }
-            .metric-value { font-size: 1.25rem; }
-        }
-
-        /* =========================================================
-           ESTILOS ADICIONALES – MOTOR DE ENSAMBLE ML
-        ========================================================= */
-        .ensamble-section {
-            background: linear-gradient(180deg, #ffffff 0%, var(--neutral-100) 100%);
-            border: 1px solid var(--neutral-200);
-            border-radius: 0.75rem;
+        /* Ensemble Engine Section */
+        .ensemble-card {
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
             padding: 1.25rem;
-            margin-bottom: 1.5rem;
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);
+            margin-bottom: 1.25rem;
         }
 
-        .ensamble-title {
+        .ensemble-card-title {
             font-size: 0.72rem;
             font-weight: 700;
-            letter-spacing: 0.08em;
             text-transform: uppercase;
-            color: var(--accent);
+            letter-spacing: 0.08em;
+            color: var(--text-secondary);
             margin-bottom: 1rem;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            justify-content: space-between;
         }
 
-        .model-cards-grid {
+        .ensemble-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 0.75rem;
             margin-bottom: 1rem;
         }
 
-        @media (max-width: 576px) {
-            .model-cards-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .model-card {
-            background: var(--white);
-            border: 1px solid var(--neutral-200);
-            border-radius: 0.5rem;
-            padding: 0.75rem;
+        .model-vote-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 0.65rem;
             text-align: center;
-            position: relative;
-            transition: all var(--transition);
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
         }
 
-        .model-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-
-        .model-card-name {
-            font-size: 0.65rem;
+        .model-name {
+            font-size: 0.62rem;
             font-weight: 700;
-            color: var(--neutral-700);
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            margin-bottom: 0.35rem;
+            color: var(--text-muted);
         }
 
-        .model-card-vote {
-            font-size: 0.9rem;
+        .model-vote {
+            font-size: 0.8rem;
             font-weight: 700;
-            margin-bottom: 0.5rem;
         }
 
-        .model-card-vote.eficiente { color: var(--success-eco); }
-        .model-card-vote.moderado { color: var(--warning-eco); }
-        .model-card-vote.ineficiente { color: var(--danger-eco); }
+        .model-vote.eficiente { color: var(--success); }
+        .model-vote.moderado { color: var(--warning); }
+        .model-vote.ineficiente { color: var(--danger); }
 
-        .model-card-stats {
-            font-size: 0.65rem;
-            color: var(--neutral-700);
-            border-top: 1px solid var(--neutral-200);
-            padding-top: 0.4rem;
+        .model-stats {
             display: flex;
             justify-content: space-between;
+            font-size: 0.58rem;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border-color);
+            padding-top: 0.35rem;
         }
 
-        .decision-badge {
-            background: var(--primary-light);
-            color: var(--primary);
-            font-size: 0.72rem;
+        .ensemble-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .decision-method-badge {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            font-size: 0.68rem;
             font-weight: 600;
-            padding: 0.4rem 0.8rem;
-            border-radius: 0.25rem;
+            padding: 0.35rem 0.65rem;
+            border-radius: 4px;
+            color: var(--text-secondary);
             display: inline-flex;
             align-items: center;
             gap: 0.35rem;
-            border: 1px solid rgba(26, 107, 74, 0.15);
+        }
+
+        .decision-method-badge i {
+            color: var(--accent);
+        }
+
+        /* Recommendations Component */
+        .recs-container {
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+        }
+
+        .recs-title {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .recs-title i {
+            color: var(--warning);
+        }
+
+        .rec-item-dashboard {
+            display: flex;
+            gap: 0.65rem;
+            padding: 0.65rem;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            margin-bottom: 0.5rem;
+            font-size: 0.78rem;
+            color: var(--text-primary);
+            line-height: 1.35;
+        }
+
+        .rec-item-dashboard i {
+            color: var(--primary);
+            margin-top: 0.15rem;
+        }
+
+        /* =========================================================
+           SKELETON LOADER ANIMADO (SaaS Premium)
+        ========================================================= */
+        .skeleton-pulse {
+            background: linear-gradient(
+                90deg,
+                var(--bg-main) 25%,
+                var(--border-color) 37%,
+                var(--bg-main) 63%
+            );
+            background-size: 400% 100%;
+            animation: skeleton-loading 1.4s ease infinite;
+        }
+
+        @keyframes skeleton-loading {
+            0% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .skeleton-block {
+            height: 18px;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            width: 100%;
+        }
+
+        /* =========================================================
+           FOOTER
+        ========================================================= */
+        .app-footer {
+            background-color: var(--bg-card);
+            border-top: 1px solid var(--border-color);
+            padding: 1.25rem 0;
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            text-align: center;
+        }
+
+        .app-footer strong {
+            color: var(--text-secondary);
         }
     </style>
 </head>
 <body>
 
-    <!-- ======== HERO ======== -->
-    <header class="hero-section text-center">
-        <div class="container">
-            <span class="badge-hackathon mb-3 d-inline-block">
-                <i class="fa-solid fa-award me-1"></i> Hackathon ONE · Alura + Oracle · G9
-            </span>
-            <h1 class="mt-2 mb-2">
-                <i class="fa-solid fa-bolt me-2" style="color:#f9ca24;"></i>EnergiAI
-            </h1>
-            <p class="lead mb-0">Diagnóstico inteligente de consumo energético impulsado por Machine Learning.</p>
+    <!-- ======== APP HEADER ======== -->
+    <header class="app-header">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div class="brand-logo">
+                <i class="fa-solid fa-bolt-lightning rounded"></i>
+                <span>EnergiAI</span>
+            </div>
+            <div class="badge-status">
+                <span class="status-dot"></span>
+                <span>Enterprise Model Ensemble API v1</span>
+            </div>
         </div>
     </header>
 
-    <!-- ======== MAIN ======== -->
-    <main class="container mb-5">
-        <div class="row g-4 align-items-start">
+    <!-- ======== DASHBOARD GRID ======== -->
+    <div class="container dashboard-container">
+        <div class="row g-4">
 
-            <!-- ====== FORMULARIO ====== -->
+            <!-- ====== COLUMNA IZQUIERDA: CONTROLES/FORMULARIO ====== -->
             <div class="col-lg-5">
-                <div class="card">
-                    <div class="card-header d-flex align-items-center gap-2">
-                        <i class="fa-solid fa-sliders" style="color:var(--primary);"></i>
-                        <span class="section-title">Datos del inmueble</span>
-                    </div>
-                    <div class="card-body p-4">
-                        <form id="energiaForm" novalidate>
+                <div class="panel-card">
+                    <h2 class="panel-title">
+                        <i class="fa-solid fa-sliders"></i>
+                        <span>Parámetros de Inmueble</span>
+                    </h2>
 
-                            <!-- Consumo kWh -->
-                            <div class="mb-3">
-                                <label for="consumoKwh" class="form-label">Consumo mensual (kWh)</label>
-                                <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-3">
-                                    <input type="range" class="form-range flex-grow-1" id="consumoKwhRange" min="1" max="2000" step="1" value="420">
-                                    <div class="input-group flex-shrink-0" style="width: 160px;">
-                                        <input type="number" step="0.01" min="0.01" class="form-control"
-                                               id="consumoKwh" required placeholder="Ej: 420" value="420">
-                                        <span class="input-group-text"><i class="fa-solid fa-plug"></i></span>
-                                    </div>
-                                </div>
+                    <!-- Presets Rápidos -->
+                    <div>
+                        <p class="presets-label">Selección Rápida de Escenario</p>
+                        <div class="preset-grid">
+                            <div class="preset-card" id="btn-preset-eficiente">
+                                <span class="preset-card-title text-success">🌱 Eficiente</span>
+                                <span class="preset-card-subtitle">120 kWh · 60m²</span>
                             </div>
+                            <div class="preset-card" id="btn-preset-moderado">
+                                <span class="preset-card-title text-warning">⚡ Moderado</span>
+                                <span class="preset-card-subtitle">320 kWh · 90m²</span>
+                            </div>
+                            <div class="preset-card" id="btn-preset-ineficiente">
+                                <span class="preset-card-title text-danger">🔴 Ineficiente</span>
+                                <span class="preset-card-subtitle">850 kWh · 70m²</span>
+                            </div>
+                        </div>
+                    </div>
 
-                            <!-- Uso Horario Pico -->
-                            <div class="mb-3">
-                                <label for="usoHorarioPico" class="form-label">Uso en horario pico</label>
-                                <select class="form-select" id="usoHorarioPico" required>
-                                    <option value="true">Sí – Uso intensivo (18 hs – 22 hs)</option>
-                                    <option value="false">No – Uso moderado / fuera de pico</option>
+                    <!-- Formulario Principal -->
+                    <form id="energiaForm" novalidate class="d-flex flex-column flex-grow-1">
+
+                        <!-- Consumo kWh -->
+                        <div class="form-group-custom">
+                            <label class="form-label-custom" for="consumoKwh">
+                                <span>Consumo mensual</span>
+                                <span class="form-label-value"><span id="val-consumo">420</span> kWh</span>
+                            </label>
+                            <input type="range" class="form-range" id="consumoKwhRange" min="10" max="1500" step="5" value="420">
+                            <input type="hidden" id="consumoKwh" value="420">
+                        </div>
+
+                        <!-- Metros Cuadrados -->
+                        <div class="form-group-custom">
+                            <label class="form-label-custom" for="metrosCuadrados">
+                                <span>Área habitable</span>
+                                <span class="form-label-value"><span id="val-metros">90</span> m²</span>
+                            </label>
+                            <input type="range" class="form-range" id="metrosCuadradosRange" min="10" max="500" step="5" value="90">
+                            <input type="hidden" id="metrosCuadrados" value="90">
+                        </div>
+
+                        <!-- Horas Alto Consumo -->
+                        <div class="form-group-custom">
+                            <label class="form-label-custom" for="horasAltoConsumo">
+                                <span>Horas alto consumo/día</span>
+                                <span class="form-label-value"><span id="val-horas">8</span> hrs/día</span>
+                            </label>
+                            <input type="range" class="form-range" id="horasAltoConsumoRange" min="0" max="24" step="1" value="8">
+                            <input type="hidden" id="horasAltoConsumo" value="8">
+                        </div>
+
+                        <!-- Tipo Inmueble y Ocupantes -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-7">
+                                <label for="tipoInmueble" class="form-label-custom">Tipo Inmueble</label>
+                                <select class="form-select-custom" id="tipoInmueble" required>
+                                    <option value="Residencial">Residencial</option>
+                                    <option value="Comercial">Comercial</option>
+                                    <option value="Industrial">Industrial</option>
                                 </select>
                             </div>
-
-                            <!-- Cantidad Equipos + Tipo Inmueble -->
-                            <div class="row g-3 mb-3">
-                                <div class="col-6">
-                                    <label for="cantidadEquipos" class="form-label">Cantidad de equipos</label>
-                                    <div class="input-group">
-                                        <input type="number" min="1" class="form-control"
-                                               id="cantidadEquipos" required placeholder="Ej: 10">
-                                        <span class="input-group-text"><i class="fa-solid fa-tv"></i></span>
-                                    </div>
-                                </div>
-                                <div class="col-12 mt-3">
-                                    <label for="horasAltoConsumo" class="form-label">Horas de alto consumo/día</label>
-                                    <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-3">
-                                        <input type="range" class="form-range flex-grow-1" id="horasAltoConsumoRange" min="0" max="24" step="1" value="8">
-                                        <div class="input-group flex-shrink-0" style="width: 160px;">
-                                            <input type="number" min="0" max="24" class="form-control"
-                                                   id="horasAltoConsumo" required placeholder="Ej: 8" value="8">
-                                            <span class="input-group-text"><i class="fa-solid fa-clock"></i></span>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div class="col-5">
+                                <label for="cantidadPersonas" class="form-label-custom">Ocupantes</label>
+                                <input type="number" min="1" max="20" class="form-control-custom" id="cantidadPersonas" required value="3">
                             </div>
+                        </div>
 
-                            <!-- Tipo Inmueble -->
-                            <div class="mb-3">
-                                <label for="tipoInmueble" class="form-label">Tipo de inmueble</label>
-                                <select class="form-select" id="tipoInmueble" required>
-                                    <option value="Residencial">Residencial (Casa / Departamento)</option>
-                                    <option value="Comercial">Comercial (Oficina / Local)</option>
-                                    <option value="Industrial">Industrial (Planta / Galpón)</option>
-                                </select>
+                        <!-- Cantidad Equipos -->
+                        <div class="mb-3">
+                            <label for="cantidadEquipos" class="form-label-custom">Cantidad de equipos eléctricos</label>
+                            <input type="number" min="1" max="100" class="form-control-custom" id="cantidadEquipos" required value="10">
+                        </div>
+
+                        <!-- Horario Pico Switch -->
+                        <div class="switch-container">
+                            <div class="switch-label">
+                                <span>Uso en horario pico</span>
+                                <span class="switch-description">Uso intensivo entre las 18:00 y 22:00</span>
                             </div>
+                            <label class="form-switch-custom">
+                                <input type="checkbox" id="usoHorarioPico" checked>
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
 
-                            <!-- Metros cuadrados + Cantidad personas -->
-                            <div class="row g-3 mb-4">
-                                <div class="col-12">
-                                    <label for="metrosCuadrados" class="form-label">Área (m²)</label>
-                                    <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-3">
-                                        <input type="range" class="form-range flex-grow-1" id="metrosCuadradosRange" min="10" max="1000" step="1" value="90">
-                                        <div class="input-group flex-shrink-0" style="width: 160px;">
-                                            <input type="number" step="0.1" min="1" class="form-control"
-                                                   id="metrosCuadrados" required placeholder="Ej: 90" value="90">
-                                            <span class="input-group-text"><i class="fa-solid fa-ruler-combined"></i></span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <label for="cantidadPersonas" class="form-label">Ocupantes</label>
-                                    <div class="input-group">
-                                        <input type="number" min="1" class="form-control"
-                                               id="cantidadPersonas" required placeholder="Ej: 4">
-                                        <span class="input-group-text"><i class="fa-solid fa-users"></i></span>
-                                    </div>
-                                </div>
-                            </div>
+                        <!-- Submit Button -->
+                        <div class="d-grid mt-auto">
+                            <button type="submit" class="btn-submit-dashboard" id="submitBtn">
+                                <i class="fa-solid fa-microchip me-2"></i>GENERAR DIAGNÓSTICO IA
+                            </button>
+                        </div>
 
-                            <div class="d-grid">
-                                <button type="submit" class="btn" id="submitBtn">
-                                    <i class="fa-solid fa-microchip me-2"></i>Generar Diagnóstico
-                                </button>
-                            </div>
-
-                        </form>
-                    </div>
+                    </form>
                 </div>
             </div>
 
-            <!-- ====== RESULTADOS ====== -->
+            <!-- ====== COLUMNA DERECHA: RESULTADOS ====== -->
             <div class="col-lg-7">
-                <div class="card h-100">
-                    <div class="card-header d-flex align-items-center gap-2">
-                        <i class="fa-solid fa-chart-bar" style="color:var(--accent);"></i>
-                        <span class="section-title">Resultados del análisis</span>
-                    </div>
-                    <div class="card-body p-4 d-flex flex-column" id="resultContainer">
+                <div class="panel-card">
+                    <h2 class="panel-title">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <span>Resultados de Diagnóstico</span>
+                    </h2>
 
-                        <!-- Estado vacío -->
-                        <div class="text-center my-auto py-5" id="emptyState">
-                            <i class="fa-regular fa-clipboard empty-state-icon"></i>
-                            <h6 class="text-muted mt-3 fw-semibold">Esperando datos</h6>
-                            <p class="text-muted small mb-0">
-                                Completa el formulario y presiona <strong>Generar Diagnóstico</strong>
-                                para obtener tu análisis energético con IA.
-                            </p>
+                    <!-- CONTENEDOR PRINCIPAL DE RESPUESTA -->
+                    <div class="d-flex flex-column flex-grow-1 justify-content-center" id="resultContainer">
+
+                        <!-- Estado Vacío -->
+                        <div class="empty-state" id="emptyState">
+                            <i class="fa-regular fa-folder-open empty-state-icon"></i>
+                            <span class="empty-state-title">Esperando Parámetros</span>
+                            <span class="empty-state-subtitle">Complete el formulario a la izquierda y haga clic en Generar Diagnóstico para activar el ensamble IA.</span>
                         </div>
 
-                        <!-- Estado de carga -->
-                        <div class="text-center my-auto py-5 d-none" id="loadingState">
-                            <div class="spinner-border text-primary" style="width: 3.5rem; height: 3.5rem;" role="status">
-                                <span class="visually-hidden">Cargando...</span>
+                        <!-- Skeleton Loader Animado (Carga) -->
+                        <div class="d-none w-100" id="skeletonState">
+                            <div class="diagnostic-header">
+                                <div class="w-50">
+                                    <div class="skeleton-block skeleton-pulse w-25"></div>
+                                    <div class="skeleton-block skeleton-pulse w-75" style="height: 35px;"></div>
+                                </div>
+                                <div class="w-25">
+                                    <div class="skeleton-block skeleton-pulse w-75"></div>
+                                    <div class="skeleton-block skeleton-pulse w-100" style="height: 35px;"></div>
+                                </div>
                             </div>
-                            <h6 class="text-muted mt-3 fw-semibold">Analizando con IA...</h6>
-                            <p class="text-muted small mb-0">Evaluando modelos y ensamblando resultados.</p>
+                            <div class="confidence-container mb-3">
+                                <div class="skeleton-block skeleton-pulse w-50"></div>
+                                <div class="skeleton-block skeleton-pulse w-100" style="height: 8px;"></div>
+                            </div>
+                            <div class="ensemble-card">
+                                <div class="skeleton-block skeleton-pulse w-25"></div>
+                                <div class="row g-2 mt-2">
+                                    <div class="col-4"><div class="skeleton-block skeleton-pulse" style="height: 60px;"></div></div>
+                                    <div class="col-4"><div class="skeleton-block skeleton-pulse" style="height: 60px;"></div></div>
+                                    <div class="col-4"><div class="skeleton-block skeleton-pulse" style="height: 60px;"></div></div>
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Contenido de resultados -->
+                        <!-- Contenido Real de Resultados -->
                         <div id="resultsContent" class="d-none">
 
-                            <!-- 1. Categoría -->
-                            <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
-                                <div>
-                                    <p class="metric-label mb-1">Categoría Energética</p>
-                                    <span class="categoria-badge" id="categoriaBadge">
+                            <!-- Diagnóstico Header -->
+                            <div class="diagnostic-header">
+                                <div class="diag-badge-container">
+                                    <span class="diag-label">Categoría Asignada</span>
+                                    <div class="diagnostic-badge-premium" id="categoriaBadge">
                                         <i class="fa-solid fa-circle-check" id="categoriaIcon"></i>
                                         <span id="categoriaText">—</span>
+                                    </div>
+                                </div>
+                                <div class="metric-card-premium border-0 p-0 text-end">
+                                    <span class="diag-label">Costo Estimado Mensual</span>
+                                    <div class="metric-card-value text-accent" id="costoText" style="color:var(--accent); font-size: 1.75rem;">$0.00</div>
+                                </div>
+                            </div>
+
+                            <!-- Confianza -->
+                            <div class="confidence-container">
+                                <div class="confidence-info">
+                                    <span>Nivel de confianza del ensamble</span>
+                                    <span id="probabilityText">0%</span>
+                                </div>
+                                <div class="confidence-track">
+                                    <div class="confidence-fill" id="probabilityBar"></div>
+                                </div>
+                            </div>
+
+                            <!-- Métricas Adicionales -->
+                            <div class="metric-grid">
+                                <div class="metric-card-premium">
+                                    <span class="metric-card-label">
+                                        <i class="fa-solid fa-industry"></i>
+                                        Consumo Específico
                                     </span>
+                                    <span class="metric-card-value" id="val-consumo-especifico">0.0 kWh/m²</span>
                                 </div>
-                                <!-- Costo Estimado -->
-                                <div class="metric-card cost text-end">
-                                    <p class="metric-label mb-1">
-                                        <i class="fa-solid fa-dollar-sign me-1"></i>Costo Estimado Mensual
-                                    </p>
-                                    <div class="metric-value cost" id="costoText">—</div>
-                                </div>
-                            </div>
-
-                            <!-- 2. Probabilidad -->
-                            <div class="mb-4">
-                                <div class="d-flex justify-content-between align-items-baseline mb-2">
-                                    <p class="metric-label mb-0">Confianza del modelo (probabilidad)</p>
-                                    <span class="fw-bold small" id="probabilityText">0%</span>
-                                </div>
-                                <div class="prob-track">
-                                    <div class="prob-fill" id="probabilityBar" style="width:0%;"></div>
+                                <div class="metric-card-premium">
+                                    <span class="metric-card-label">
+                                        <i class="fa-solid fa-bolt"></i>
+                                        Intensidad diaria
+                                    </span>
+                                    <span class="metric-card-value" id="val-intensidad-diaria">0.0%</span>
                                 </div>
                             </div>
 
-                            <!-- 2.5. Motor de Ensamble ML -->
-                            <div class="ensamble-section">
-                                <div class="ensamble-title">
-                                    <i class="fa-solid fa-network-wired"></i>
-                                    <span>Motor de Ensamble de Inferencia (Hard Voting)</span>
+                            <!-- Ensamble Engine Card -->
+                            <div class="ensemble-card">
+                                <div class="ensemble-card-title">
+                                    <span>Votación de Modelos e Inferencia</span>
+                                    <span class="badge bg-secondary" id="desempateBadge" style="display:none;">Desempate</span>
                                 </div>
-                                
-                                <div class="model-cards-grid">
-                                    <!-- XGBoost -->
-                                    <div class="model-card">
-                                        <div class="model-card-name">XGBoost Pipeline</div>
-                                        <div class="model-card-vote" id="voteXGB">—</div>
-                                        <div class="model-card-stats">
-                                            <span>Acc: <strong id="accXGB">—</strong></span>
-                                            <span>Lat: <strong id="latXGB">—</strong></span>
+                                <div class="ensemble-grid">
+                                    <div class="model-vote-card">
+                                        <span class="model-name">XGBoost</span>
+                                        <span class="model-vote" id="voteXGB">—</span>
+                                        <div class="model-stats">
+                                            <span>Acc: 86.2%</span>
+                                            <span id="latXGB">—</span>
                                         </div>
                                     </div>
-                                    
-                                    <!-- Regresión Logística -->
-                                    <div class="model-card">
-                                        <div class="model-card-name">Reg. Logística</div>
-                                        <div class="model-card-vote" id="voteLog">—</div>
-                                        <div class="model-card-stats">
-                                            <span>Acc: <strong id="accLog">—</strong></span>
-                                            <span>Lat: <strong id="latLog">—</strong></span>
+                                    <div class="model-vote-card">
+                                        <span class="model-name">Reg. Logística</span>
+                                        <span class="model-vote" id="voteLog">—</span>
+                                        <div class="model-stats">
+                                            <span>Acc: 82.9%</span>
+                                            <span id="latLog">—</span>
                                         </div>
                                     </div>
-                                    
-                                    <!-- KNN -->
-                                    <div class="model-card">
-                                        <div class="model-card-name">KNN Pipeline</div>
-                                        <div class="model-card-vote" id="voteKNN">—</div>
-                                        <div class="model-card-stats">
-                                            <span>Acc: <strong id="accKNN">—</strong></span>
-                                            <span>Lat: <strong id="latKNN">—</strong></span>
+                                    <div class="model-vote-card">
+                                        <span class="model-name">KNN Model</span>
+                                        <span class="model-vote" id="voteKNN">—</span>
+                                        <div class="model-stats">
+                                            <span>Acc: 78.8%</span>
+                                            <span id="latKNN">—</span>
                                         </div>
                                     </div>
                                 </div>
-
-                                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                                    <div class="decision-badge" id="decisionBadge">
-                                        <i class="fa-solid fa-gavel"></i>
-                                        <span id="decisionText">Método de decisión: —</span>
+                                <div class="ensemble-footer">
+                                    <div class="decision-method-badge" id="decisionBadge">
+                                        <i class="fa-solid fa-gears"></i>
+                                        <span id="decisionText">Método: —</span>
                                     </div>
-                                    <span class="badge bg-secondary" id="desempateBadge" style="display:none;">Desempate Aplicado</span>
                                 </div>
                             </div>
 
-                            <!-- 3. Recomendaciones -->
-                            <div>
-                                <p class="metric-label mb-2">
-                                    <i class="fa-solid fa-lightbulb me-1" style="color:var(--warning-eco);"></i>
-                                    Recomendaciones de ahorro
-                                </p>
-                                <ul class="list-unstyled mb-0" id="recommendationsList"></ul>
+                            <!-- Recomendaciones -->
+                            <div class="recs-container">
+                                <div class="recs-title">
+                                    <i class="fa-solid fa-circle-exclamation"></i>
+                                    <span>Plan de Acción Recomendado</span>
+                                </div>
+                                <div id="recommendationsList">
+                                    <!-- Dinámico -->
+                                </div>
                             </div>
 
-                            <!-- Export Button -->
+                            <!-- Export -->
                             <div class="mt-4 text-center">
-                                <button type="button" class="btn btn-outline-secondary" id="exportPdfBtn" style="border-radius: 0.6rem; font-weight: 500; padding: 0.6rem 1.2rem;">
-                                    <i class="fa-regular fa-file-pdf me-2"></i>Descargar Reporte (PDF)
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="exportPdfBtn" style="border-radius: var(--radius-md); font-weight: 600; padding: 0.5rem 1rem;">
+                                    <i class="fa-regular fa-file-pdf me-2"></i>Descargar Auditoría Energética
                                 </button>
                             </div>
 
                         </div>
 
-                        <!-- Error -->
-                        <div id="errorContent" class="d-none my-auto">
-                            <div class="error-box">
-                                <i class="fa-solid fa-triangle-exclamation fa-2x mb-3 opacity-60"></i>
-                                <h6 class="fw-bold mb-1">No se pudo procesar el análisis</h6>
-                                <p class="small mb-0" id="errorText">Error de conexión con el servidor.</p>
-                            </div>
+                        <!-- Error State -->
+                        <div id="errorContent" class="d-none w-100 text-center py-5">
+                            <i class="fa-solid fa-circle-exclamation text-danger mb-3" style="font-size: 2.5rem;"></i>
+                            <h5 class="fw-bold">Error de Conexión de API</h5>
+                            <p class="small text-secondary mx-auto mb-0" style="max-width: 320px;" id="errorText">No se pudo establecer conexión con el backend de Spring Boot.</p>
                         </div>
 
                     </div>
@@ -671,19 +1026,18 @@
             </div>
 
         </div>
-    </main>
+    </div>
 
-    <!-- ======== FOOTER ======== -->
-    <footer>
+    <!-- ======== APP FOOTER ======== -->
+    <footer class="app-footer">
         <div class="container">
-            <strong>EnergiAI</strong> · Hackathon ONE G9 · Alura + Oracle &nbsp;|&nbsp;
-            Backend: <code>Spring Boot 3</code> · ML: <code>Python FastAPI</code>
+            <span>EnergiAI Enterprise Analytics Dashboard &copy; 2026. Hackathon ONE | <strong>Team 27</strong> (Alura + Oracle G9).</span>
         </div>
     </footer>
 
-    <!-- Bootstrap JS -->
+    <!-- Bootstrap Bundle JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- App Logic -->
+    <!-- Frontend logic -->
     <script src="app.js"></script>
 </body>
 </html>

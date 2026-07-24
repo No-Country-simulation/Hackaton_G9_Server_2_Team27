@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
@@ -30,76 +31,67 @@ public class AnalisisEnergeticoServiceImpl implements AnalisisEnergeticoService 
 
     @Override
     public AnalisisResponseDTO procesarAnalisis(AnalisisRequestDTO request) {
-        double consumoKwh = request.getConsumoKwh();
-        double costoEstimadoMensual = consumoKwh * TARIFA_REFERENCIA_KWH;
+        double costoEstimado = request.getConsumoKwh() * TARIFA_REFERENCIA_KWH;
 
-        String categoria = "Indeterminado";
-        double probabilidad = 0.0;
-        String prediccionFinalEnsamble = null;
-        String metodoDecision = null;
-        Boolean desempateAplicado = null;
+        // Valores por defecto (fallback en caso de error de comunicación con ML)
+        String categoria = "Moderado";
+        double probabilidad = 0.85;
         Map<String, String> votosDetallados = null;
-        Map<String, String> precisionHistorica = null;
-        Map<String, Double> latenciaMs = null;
+        String metodoDecision = "Predicción por fallback (servicio ML offline)";
+        Map<String, Double> latenciasMs = null;
 
+        // ── Llamada al servicio ML (FastAPI) ──────────────────────────────────
         try {
             @SuppressWarnings("unchecked")
-            Map<String, Object> mlResponse = restTemplate.postForObject(mlServiceUrl, request, Map.class);
-            if (mlResponse != null) {
-                if (mlResponse.containsKey("prediccion_final_ensamble")) {
-                    categoria = (String) mlResponse.get("prediccion_final_ensamble");
-                    prediccionFinalEnsamble = categoria;
+            ResponseEntity<Map> responseEntity = restTemplate.postForEntity(mlServiceUrl, request, Map.class);
+
+            if (responseEntity.getStatusCode().is2xxSuccessful() && responseEntity.getBody() != null) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> mlResponse = responseEntity.getBody();
+
+                // Raíz: "categoria" y "probabilidad"
+                if (mlResponse.containsKey("categoria")) {
+                    categoria = (String) mlResponse.get("categoria");
                 }
-                if (mlResponse.containsKey("metodo_decision")) {
-                    metodoDecision = (String) mlResponse.get("metodo_decision");
-                }
-                if (mlResponse.containsKey("desempate_aplicado")) {
-                    desempateAplicado = (Boolean) mlResponse.get("desempate_aplicado");
-                }
-                if (mlResponse.containsKey("votos_detallados")) {
-                    votosDetallados = (Map<String, String>) mlResponse.get("votos_detallados");
-                }
-                if (mlResponse.containsKey("precision_historica")) {
-                    precisionHistorica = (Map<String, String>) mlResponse.get("precision_historica");
-                }
-                if (mlResponse.containsKey("latencia_ms")) {
-                    latenciaMs = (Map<String, Double>) mlResponse.get("latencia_ms");
+                if (mlResponse.containsKey("probabilidad")) {
+                    probabilidad = ((Number) mlResponse.get("probabilidad")).doubleValue();
                 }
 
-                // Calcular probabilidad basada en consenso o desempate
-                if (desempateAplicado != null && votosDetallados != null) {
-                    if (Boolean.TRUE.equals(desempateAplicado)) {
-                        probabilidad = 0.8625; // Precisión de XGBoost que desempata
-                    } else {
-                        long votosUnicos = votosDetallados.values().stream().distinct().count();
-                        if (votosUnicos == 1) {
-                            probabilidad = 1.0; // 3 de 3 coinciden
-                        } else {
-                            probabilidad = 0.6667; // 2 de 3 coinciden
-                        }
+                // Objeto anidado: "detalles" → votos_detallados, metodo_decision, latencias_ms
+                if (mlResponse.get("detalles") instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> detallesMap = (Map<String, Object>) mlResponse.get("detalles");
+
+                    if (detallesMap.containsKey("metodo_decision")) {
+                        metodoDecision = (String) detallesMap.get("metodo_decision");
                     }
-                } else {
-                    probabilidad = 0.85;
+                    if (detallesMap.containsKey("votos_detallados")) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, String> votos = (Map<String, String>) detallesMap.get("votos_detallados");
+                        votosDetallados = votos;
+                    }
+                    if (detallesMap.containsKey("latencias_ms")) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Double> latencias = (Map<String, Double>) detallesMap.get("latencias_ms");
+                        latenciasMs = latencias;
+                    }
                 }
+
+                log.info("[ML] Categoría: {} | Probabilidad: {} | Método: {}", categoria, probabilidad, metodoDecision);
             }
         } catch (Exception e) {
-            log.warn(
-                    "El servicio de Machine Learning no está disponible en {}. Usando lógica temporal simulada. Error: {}",
-                    mlServiceUrl, e.getMessage());
-            categoria = determinarCategoria(consumoKwh);
+            log.warn("[EnergiAI] Fallo de comunicación con ML-service ({}); ejecutando fallback local.", e.getMessage());
+            categoria = determinarCategoria(request.getConsumoKwh());
             probabilidad = 0.88;
-            prediccionFinalEnsamble = categoria;
             metodoDecision = "Lógica de Fallback Local";
-            desempateAplicado = false;
         }
 
-        // Recomendaciones contextuales (basadas en los datos del request) +
-        // Recomendaciones por categoría (requeridas por el Hackathon)
+        // ── Recomendaciones (contextuales + por categoría) ───────────────────
         List<String> recomendaciones = new ArrayList<>();
         recomendaciones.addAll(generarRecomendaciones(request, categoria));
         recomendaciones.addAll(obtenerRecomendaciones(categoria));
 
-        // Persistir la entidad completa para conservar el historial en DB
+        // ── Persistencia en H2 ───────────────────────────────────────────────
         AnalisisEnergetico entidad = AnalisisEnergetico.builder()
                 .consumoKwh(request.getConsumoKwh())
                 .usoHorarioPico(request.getUsoHorarioPico())
@@ -110,23 +102,26 @@ public class AnalisisEnergeticoServiceImpl implements AnalisisEnergeticoService 
                 .cantidadPersonas(request.getCantidadPersonas())
                 .categoria(categoria)
                 .probabilidad(probabilidad)
-                .costoEstimadoMensual(costoEstimadoMensual)
+                .costoEstimadoMensual(costoEstimado)
                 .recomendaciones(recomendaciones)
                 .build();
 
-        AnalisisEnergetico entidadGuardada = repository.save(entidad);
+        entidad = repository.save(entidad);
+
+        // ── Construcción del ResponseDTO con estructura anidada ───────────────
+        AnalisisResponseDTO.DetallesDTO detallesDTO = AnalisisResponseDTO.DetallesDTO.builder()
+                .votosDetallados(votosDetallados)
+                .metodoDecision(metodoDecision)
+                .latenciasMs(latenciasMs)
+                .build();
 
         return AnalisisResponseDTO.builder()
-                .categoria(entidadGuardada.getCategoria())
-                .probabilidad(entidadGuardada.getProbabilidad())
-                .costoEstimadoMensual(entidadGuardada.getCostoEstimadoMensual())
-                .recomendaciones(entidadGuardada.getRecomendaciones())
-                .prediccionFinalEnsamble(prediccionFinalEnsamble)
-                .metodoDecision(metodoDecision)
-                .desempateAplicado(desempateAplicado)
-                .votosDetallados(votosDetallados)
-                .precisionHistorica(precisionHistorica)
-                .latenciaMs(latenciaMs)
+                .id(entidad.getId())
+                .categoria(categoria)
+                .probabilidad(probabilidad)
+                .costoEstimadoMensual(costoEstimado)
+                .recomendaciones(recomendaciones)
+                .detalles(detallesDTO)
                 .build();
     }
 
@@ -141,6 +136,8 @@ public class AnalisisEnergeticoServiceImpl implements AnalisisEnergeticoService 
                 .orElseThrow(
                         () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Análisis no encontrado con id " + id));
     }
+
+    // ── Helpers privados ─────────────────────────────────────────────────────
 
     private String determinarCategoria(double consumoKwh) {
         if (consumoKwh < 200) {
