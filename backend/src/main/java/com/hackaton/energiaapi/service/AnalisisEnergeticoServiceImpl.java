@@ -35,16 +35,51 @@ public class AnalisisEnergeticoServiceImpl implements AnalisisEnergeticoService 
 
         String categoria = "Indeterminado";
         double probabilidad = 0.0;
+        String prediccionFinalEnsamble = null;
+        String metodoDecision = null;
+        Boolean desempateAplicado = null;
+        Map<String, String> votosDetallados = null;
+        Map<String, String> precisionHistorica = null;
+        Map<String, Double> latenciaMs = null;
 
         try {
             @SuppressWarnings("unchecked")
             Map<String, Object> mlResponse = restTemplate.postForObject(mlServiceUrl, request, Map.class);
             if (mlResponse != null) {
-                if (mlResponse.containsKey("categoria")) {
-                    categoria = (String) mlResponse.get("categoria");
+                if (mlResponse.containsKey("prediccion_final_ensamble")) {
+                    categoria = (String) mlResponse.get("prediccion_final_ensamble");
+                    prediccionFinalEnsamble = categoria;
                 }
-                if (mlResponse.containsKey("probabilidad")) {
-                    probabilidad = Double.parseDouble(mlResponse.get("probabilidad").toString());
+                if (mlResponse.containsKey("metodo_decision")) {
+                    metodoDecision = (String) mlResponse.get("metodo_decision");
+                }
+                if (mlResponse.containsKey("desempate_aplicado")) {
+                    desempateAplicado = (Boolean) mlResponse.get("desempate_aplicado");
+                }
+                if (mlResponse.containsKey("votos_detallados")) {
+                    votosDetallados = (Map<String, String>) mlResponse.get("votos_detallados");
+                }
+                if (mlResponse.containsKey("precision_historica")) {
+                    precisionHistorica = (Map<String, String>) mlResponse.get("precision_historica");
+                }
+                if (mlResponse.containsKey("latencia_ms")) {
+                    latenciaMs = (Map<String, Double>) mlResponse.get("latencia_ms");
+                }
+
+                // Calcular probabilidad basada en consenso o desempate
+                if (desempateAplicado != null && votosDetallados != null) {
+                    if (Boolean.TRUE.equals(desempateAplicado)) {
+                        probabilidad = 0.8625; // Precisión de XGBoost que desempata
+                    } else {
+                        long votosUnicos = votosDetallados.values().stream().distinct().count();
+                        if (votosUnicos == 1) {
+                            probabilidad = 1.0; // 3 de 3 coinciden
+                        } else {
+                            probabilidad = 0.6667; // 2 de 3 coinciden
+                        }
+                    }
+                } else {
+                    probabilidad = 0.85;
                 }
             }
         } catch (Exception e) {
@@ -53,6 +88,9 @@ public class AnalisisEnergeticoServiceImpl implements AnalisisEnergeticoService 
                     mlServiceUrl, e.getMessage());
             categoria = determinarCategoria(consumoKwh);
             probabilidad = 0.88;
+            prediccionFinalEnsamble = categoria;
+            metodoDecision = "Lógica de Fallback Local";
+            desempateAplicado = false;
         }
 
         // Recomendaciones contextuales (basadas en los datos del request) +
@@ -78,12 +116,17 @@ public class AnalisisEnergeticoServiceImpl implements AnalisisEnergeticoService 
 
         AnalisisEnergetico entidadGuardada = repository.save(entidad);
 
-        // Mapear la entidad guardada al DTO de respuesta limpio
         return AnalisisResponseDTO.builder()
                 .categoria(entidadGuardada.getCategoria())
                 .probabilidad(entidadGuardada.getProbabilidad())
                 .costoEstimadoMensual(entidadGuardada.getCostoEstimadoMensual())
                 .recomendaciones(entidadGuardada.getRecomendaciones())
+                .prediccionFinalEnsamble(prediccionFinalEnsamble)
+                .metodoDecision(metodoDecision)
+                .desempateAplicado(desempateAplicado)
+                .votosDetallados(votosDetallados)
+                .precisionHistorica(precisionHistorica)
+                .latenciaMs(latenciaMs)
                 .build();
     }
 

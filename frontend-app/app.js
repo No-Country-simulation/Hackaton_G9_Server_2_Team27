@@ -3,29 +3,70 @@ document.addEventListener("DOMContentLoaded", () => {
     // ─────────────────────────────────────────────
     // Referencias DOM
     // ─────────────────────────────────────────────
-    const form               = document.getElementById("energiaForm");
-    const submitBtn          = document.getElementById("submitBtn");
+    const form = document.getElementById("energiaForm");
+    const submitBtn = document.getElementById("submitBtn");
 
     // Paneles de vista
-    const emptyState         = document.getElementById("emptyState");
-    const resultsContent     = document.getElementById("resultsContent");
-    const errorContent       = document.getElementById("errorContent");
+    const emptyState = document.getElementById("emptyState");
+    const loadingState = document.getElementById("loadingState");
+    const resultsContent = document.getElementById("resultsContent");
+    const errorContent = document.getElementById("errorContent");
 
     // Resultado – categoría
-    const categoriaBadge     = document.getElementById("categoriaBadge");
-    const categoriaIcon      = document.getElementById("categoriaIcon");
-    const categoriaText      = document.getElementById("categoriaText");
+    const categoriaBadge = document.getElementById("categoriaBadge");
+    const categoriaIcon = document.getElementById("categoriaIcon");
+    const categoriaText = document.getElementById("categoriaText");
 
     // Resultado – costo
-    const costoText          = document.getElementById("costoText");
+    const costoText = document.getElementById("costoText");
 
     // Resultado – probabilidad
-    const probabilityBar     = document.getElementById("probabilityBar");
-    const probabilityText    = document.getElementById("probabilityText");
+    const probabilityBar = document.getElementById("probabilityBar");
+    const probabilityText = document.getElementById("probabilityText");
 
     // Resultado – recomendaciones y error
     const recommendationsList = document.getElementById("recommendationsList");
-    const errorText           = document.getElementById("errorText");
+    const errorText = document.getElementById("errorText");
+
+    // Referencias DOM adicionales para el ensamble
+    const voteXGB = document.getElementById("voteXGB");
+    const accXGB = document.getElementById("accXGB");
+    const latXGB = document.getElementById("latXGB");
+
+    const voteLog = document.getElementById("voteLog");
+    const accLog = document.getElementById("accLog");
+    const latLog = document.getElementById("latLog");
+
+    const voteKNN = document.getElementById("voteKNN");
+    const accKNN = document.getElementById("accKNN");
+    const latKNN = document.getElementById("latKNN");
+
+    const decisionText = document.getElementById("decisionText");
+    const desempateBadge = document.getElementById("desempateBadge");
+
+    // Sliders
+    const consumoKwh = document.getElementById("consumoKwh");
+    const consumoKwhRange = document.getElementById("consumoKwhRange");
+    const horasAltoConsumo = document.getElementById("horasAltoConsumo");
+    const horasAltoConsumoRange = document.getElementById("horasAltoConsumoRange");
+    const metrosCuadrados = document.getElementById("metrosCuadrados");
+    const metrosCuadradosRange = document.getElementById("metrosCuadradosRange");
+
+    function syncInputRange(inputEl, rangeEl) {
+        if (!inputEl || !rangeEl) return;
+        
+        const updateRange = () => { if(inputEl.value) rangeEl.value = inputEl.value; };
+        const updateInput = () => { inputEl.value = rangeEl.value; };
+        
+        inputEl.addEventListener("input", updateRange);
+        inputEl.addEventListener("change", updateRange);
+        
+        rangeEl.addEventListener("input", updateInput);
+        rangeEl.addEventListener("change", updateInput);
+    }
+    syncInputRange(consumoKwh, consumoKwhRange);
+    syncInputRange(horasAltoConsumo, horasAltoConsumoRange);
+    syncInputRange(metrosCuadrados, metrosCuadradosRange);
 
     // ─────────────────────────────────────────────
     // Configuración de la API
@@ -52,20 +93,20 @@ document.addEventListener("DOMContentLoaded", () => {
         // El contrato del backend (AnalisisRequestDTO.java) usa camelCase.
         // Los 7 campos son los que acepta la validación @Valid del servidor.
         const payload = {
-            consumoKwh:       parseFloat(document.getElementById("consumoKwh").value),
-            usoHorarioPico:   document.getElementById("usoHorarioPico").value === "true",
-            cantidadEquipos:  parseInt(document.getElementById("cantidadEquipos").value, 10),
-            tipoInmueble:     document.getElementById("tipoInmueble").value,
+            consumoKwh: parseFloat(document.getElementById("consumoKwh").value),
+            usoHorarioPico: document.getElementById("usoHorarioPico").value === "true",
+            cantidadEquipos: parseInt(document.getElementById("cantidadEquipos").value, 10),
+            tipoInmueble: document.getElementById("tipoInmueble").value,
             horasAltoConsumo: parseInt(document.getElementById("horasAltoConsumo").value, 10),
-            metrosCuadrados:  parseFloat(document.getElementById("metrosCuadrados").value),
+            metrosCuadrados: parseFloat(document.getElementById("metrosCuadrados").value),
             cantidadPersonas: parseInt(document.getElementById("cantidadPersonas").value, 10)
         };
 
         try {
             const response = await fetch(API_URL, {
-                method:  "POST",
+                method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body:    JSON.stringify(payload)
+                body: JSON.stringify(payload)
             });
 
             // Manejo de errores HTTP (400, 500, etc.) sin alert() nativo
@@ -101,7 +142,7 @@ document.addEventListener("DOMContentLoaded", () => {
             setView("error");
         } finally {
             submitBtn.innerHTML = originalHtml;
-            submitBtn.disabled  = false;
+            submitBtn.disabled = false;
         }
     });
 
@@ -110,12 +151,19 @@ document.addEventListener("DOMContentLoaded", () => {
     // ─────────────────────────────────────────────
     function setView(state) {
         emptyState.classList.add("d-none");
+        if (loadingState) loadingState.classList.add("d-none");
         resultsContent.classList.add("d-none");
         errorContent.classList.add("d-none");
 
-        if (state === "results") { resultsContent.classList.remove("d-none"); }
-        if (state === "error")   { errorContent.classList.remove("d-none");   }
-        // "loading" deja los tres ocultos (el botón ya muestra el spinner)
+        if (state === "loading") {
+            if (loadingState) loadingState.classList.remove("d-none");
+            probabilityBar.style.width = "0%";
+            probabilityText.textContent = "0%";
+        } else if (state === "results") {
+            resultsContent.classList.remove("d-none");
+        } else if (state === "error") {
+            errorContent.classList.remove("d-none");
+        }
     }
 
     // ─────────────────────────────────────────────
@@ -155,12 +203,22 @@ document.addEventListener("DOMContentLoaded", () => {
         // ── 3. PROBABILIDAD ───────────────────────────────────────────────
         // Campo del DTO: "probabilidad" (Double, puede ser 0.0–1.0 o 0–100)
         let prob = data.probabilidad ?? 0;
-        // Normalizar a porcentaje si llega en rango 0–1
-        if (prob > 0 && prob <= 1) { prob = prob * 100; }
-        prob = Math.min(100, Math.round(prob));
+
+        // Regla de UI: Si el motor indica votos, usar el ratio para la barra visual
+        if (data.metodoDecision && data.metodoDecision.includes("3/3")) {
+            prob = 100;
+        } else if (data.metodoDecision && data.metodoDecision.includes("2/3")) {
+            prob = 67;
+        } else {
+            if (prob > 0 && prob <= 1) { prob = prob * 100; }
+            prob = Math.min(100, Math.round(prob));
+        }
 
         probabilityText.textContent = `${prob}%`;
-        probabilityBar.style.width  = `${prob}%`;
+        // Timeout para que la animación CSS se dispare después de mostrar el contenedor
+        setTimeout(() => {
+            probabilityBar.style.width = `${prob}%`;
+        }, 50);
 
         // Color semántico de la barra
         probabilityBar.className = "prob-fill";
@@ -187,6 +245,25 @@ document.addEventListener("DOMContentLoaded", () => {
                 `<span>${rec}</span>`;
             recommendationsList.appendChild(li);
         });
+
+        // ── 5. MOTOR DE ENSAMBLE ML ───────────────────────────────────────
+        if (data.votosDetallados) {
+            updateModelCard(voteXGB, accXGB, latXGB, data.votosDetallados["XGBoost"], data.precisionHistorica?.xgboost, data.latenciaMs?.xgboost_ms);
+            updateModelCard(voteLog, accLog, latLog, data.votosDetallados["Regresion Logistica"], data.precisionHistorica?.regresion_logistica, data.latenciaMs?.regresion_logistica_ms);
+            updateModelCard(voteKNN, accKNN, latKNN, data.votosDetallados["KNN"], data.precisionHistorica?.knn, data.latenciaMs?.knn_ms);
+        }
+
+        if (data.metodoDecision) {
+            decisionText.textContent = `Método de decisión: ${data.metodoDecision}`;
+        } else {
+            decisionText.textContent = `Método de decisión: —`;
+        }
+
+        if (data.desempateAplicado) {
+            desempateBadge.style.display = "inline-block";
+        } else {
+            desempateBadge.style.display = "none";
+        }
     }
 
     // ─────────────────────────────────────────────
@@ -199,11 +276,33 @@ document.addEventListener("DOMContentLoaded", () => {
      */
     function formatCurrency(value) {
         return new Intl.NumberFormat("es-AR", {
-            style:                 "currency",
-            currency:              "USD",
+            style: "currency",
+            currency: "USD",
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         }).format(value);
+    }
+
+    function updateModelCard(voteEl, accEl, latEl, voteVal, accVal, latVal) {
+        voteEl.textContent = voteVal || "—";
+        voteEl.className = "model-card-vote"; // Reset classes
+        if (voteVal) {
+            const lower = voteVal.toLowerCase();
+            if (lower.includes("eficiente") && !lower.includes("in")) voteEl.classList.add("eficiente");
+            else if (lower.includes("moderado")) voteEl.classList.add("moderado");
+            else if (lower.includes("ineficiente")) voteEl.classList.add("ineficiente");
+        }
+
+        accEl.textContent = accVal || "—";
+        latEl.textContent = latVal !== undefined ? `${latVal}ms` : "—";
+    }
+
+    // Event listener para exportar
+    const exportPdfBtn = document.getElementById("exportPdfBtn");
+    if (exportPdfBtn) {
+        exportPdfBtn.addEventListener("click", () => {
+            alert("La funcionalidad de exportación a PDF estará disponible en la próxima versión.");
+        });
     }
 
 });

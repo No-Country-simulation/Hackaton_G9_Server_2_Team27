@@ -318,6 +318,99 @@
             .hero-section { clip-path: none; padding: 2rem 0 2.5rem; }
             .metric-value { font-size: 1.25rem; }
         }
+
+        /* =========================================================
+           ESTILOS ADICIONALES – MOTOR DE ENSAMBLE ML
+        ========================================================= */
+        .ensamble-section {
+            background: linear-gradient(180deg, #ffffff 0%, var(--neutral-100) 100%);
+            border: 1px solid var(--neutral-200);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        .ensamble-title {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .model-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 576px) {
+            .model-cards-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .model-card {
+            background: var(--white);
+            border: 1px solid var(--neutral-200);
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            text-align: center;
+            position: relative;
+            transition: all var(--transition);
+        }
+
+        .model-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .model-card-name {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: var(--neutral-700);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.35rem;
+        }
+
+        .model-card-vote {
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .model-card-vote.eficiente { color: var(--success-eco); }
+        .model-card-vote.moderado { color: var(--warning-eco); }
+        .model-card-vote.ineficiente { color: var(--danger-eco); }
+
+        .model-card-stats {
+            font-size: 0.65rem;
+            color: var(--neutral-700);
+            border-top: 1px solid var(--neutral-200);
+            padding-top: 0.4rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .decision-badge {
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 0.4rem 0.8rem;
+            border-radius: 0.25rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            border: 1px solid rgba(26, 107, 74, 0.15);
+        }
     </style>
 </head>
 <body>
@@ -352,10 +445,13 @@
                             <!-- Consumo kWh -->
                             <div class="mb-3">
                                 <label for="consumoKwh" class="form-label">Consumo mensual (kWh)</label>
-                                <div class="input-group">
-                                    <input type="number" step="0.01" min="0.01" class="form-control"
-                                           id="consumoKwh" required placeholder="Ej: 420">
-                                    <span class="input-group-text"><i class="fa-solid fa-plug"></i></span>
+                                <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-3">
+                                    <input type="range" class="form-range flex-grow-1" id="consumoKwhRange" min="1" max="2000" step="1" value="420">
+                                    <div class="input-group flex-shrink-0" style="width: 160px;">
+                                        <input type="number" step="0.01" min="0.01" class="form-control"
+                                               id="consumoKwh" required placeholder="Ej: 420" value="420">
+                                        <span class="input-group-text"><i class="fa-solid fa-plug"></i></span>
+                                    </div>
                                 </div>
                             </div>
 
@@ -378,12 +474,15 @@
                                         <span class="input-group-text"><i class="fa-solid fa-tv"></i></span>
                                     </div>
                                 </div>
-                                <div class="col-6">
+                                <div class="col-12 mt-3">
                                     <label for="horasAltoConsumo" class="form-label">Horas de alto consumo/día</label>
-                                    <div class="input-group">
-                                        <input type="number" min="0" max="24" class="form-control"
-                                               id="horasAltoConsumo" required placeholder="Ej: 8">
-                                        <span class="input-group-text"><i class="fa-solid fa-clock"></i></span>
+                                    <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-3">
+                                        <input type="range" class="form-range flex-grow-1" id="horasAltoConsumoRange" min="0" max="24" step="1" value="8">
+                                        <div class="input-group flex-shrink-0" style="width: 160px;">
+                                            <input type="number" min="0" max="24" class="form-control"
+                                                   id="horasAltoConsumo" required placeholder="Ej: 8" value="8">
+                                            <span class="input-group-text"><i class="fa-solid fa-clock"></i></span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -400,12 +499,15 @@
 
                             <!-- Metros cuadrados + Cantidad personas -->
                             <div class="row g-3 mb-4">
-                                <div class="col-6">
+                                <div class="col-12">
                                     <label for="metrosCuadrados" class="form-label">Área (m²)</label>
-                                    <div class="input-group">
-                                        <input type="number" step="0.1" min="1" class="form-control"
-                                               id="metrosCuadrados" required placeholder="Ej: 90">
-                                        <span class="input-group-text"><i class="fa-solid fa-ruler-combined"></i></span>
+                                    <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-3">
+                                        <input type="range" class="form-range flex-grow-1" id="metrosCuadradosRange" min="10" max="1000" step="1" value="90">
+                                        <div class="input-group flex-shrink-0" style="width: 160px;">
+                                            <input type="number" step="0.1" min="1" class="form-control"
+                                                   id="metrosCuadrados" required placeholder="Ej: 90" value="90">
+                                            <span class="input-group-text"><i class="fa-solid fa-ruler-combined"></i></span>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="col-6">
@@ -448,6 +550,15 @@
                             </p>
                         </div>
 
+                        <!-- Estado de carga -->
+                        <div class="text-center my-auto py-5 d-none" id="loadingState">
+                            <div class="spinner-border text-primary" style="width: 3.5rem; height: 3.5rem;" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                            <h6 class="text-muted mt-3 fw-semibold">Analizando con IA...</h6>
+                            <p class="text-muted small mb-0">Evaluando modelos y ensamblando resultados.</p>
+                        </div>
+
                         <!-- Contenido de resultados -->
                         <div id="resultsContent" class="d-none">
 
@@ -480,6 +591,54 @@
                                 </div>
                             </div>
 
+                            <!-- 2.5. Motor de Ensamble ML -->
+                            <div class="ensamble-section">
+                                <div class="ensamble-title">
+                                    <i class="fa-solid fa-network-wired"></i>
+                                    <span>Motor de Ensamble de Inferencia (Hard Voting)</span>
+                                </div>
+                                
+                                <div class="model-cards-grid">
+                                    <!-- XGBoost -->
+                                    <div class="model-card">
+                                        <div class="model-card-name">XGBoost Pipeline</div>
+                                        <div class="model-card-vote" id="voteXGB">—</div>
+                                        <div class="model-card-stats">
+                                            <span>Acc: <strong id="accXGB">—</strong></span>
+                                            <span>Lat: <strong id="latXGB">—</strong></span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Regresión Logística -->
+                                    <div class="model-card">
+                                        <div class="model-card-name">Reg. Logística</div>
+                                        <div class="model-card-vote" id="voteLog">—</div>
+                                        <div class="model-card-stats">
+                                            <span>Acc: <strong id="accLog">—</strong></span>
+                                            <span>Lat: <strong id="latLog">—</strong></span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- KNN -->
+                                    <div class="model-card">
+                                        <div class="model-card-name">KNN Pipeline</div>
+                                        <div class="model-card-vote" id="voteKNN">—</div>
+                                        <div class="model-card-stats">
+                                            <span>Acc: <strong id="accKNN">—</strong></span>
+                                            <span>Lat: <strong id="latKNN">—</strong></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                    <div class="decision-badge" id="decisionBadge">
+                                        <i class="fa-solid fa-gavel"></i>
+                                        <span id="decisionText">Método de decisión: —</span>
+                                    </div>
+                                    <span class="badge bg-secondary" id="desempateBadge" style="display:none;">Desempate Aplicado</span>
+                                </div>
+                            </div>
+
                             <!-- 3. Recomendaciones -->
                             <div>
                                 <p class="metric-label mb-2">
@@ -487,6 +646,13 @@
                                     Recomendaciones de ahorro
                                 </p>
                                 <ul class="list-unstyled mb-0" id="recommendationsList"></ul>
+                            </div>
+
+                            <!-- Export Button -->
+                            <div class="mt-4 text-center">
+                                <button type="button" class="btn btn-outline-secondary" id="exportPdfBtn" style="border-radius: 0.6rem; font-weight: 500; padding: 0.6rem 1.2rem;">
+                                    <i class="fa-regular fa-file-pdf me-2"></i>Descargar Reporte (PDF)
+                                </button>
                             </div>
 
                         </div>

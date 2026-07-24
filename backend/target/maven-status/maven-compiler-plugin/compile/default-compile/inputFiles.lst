@@ -1,0 +1,9 @@
+/home/thiagol/Hackaton_G9_Server_2/backend/src/main/java/com/hackaton/energiaapi/EnergiaApiApplication.java
+/home/thiagol/Hackaton_G9_Server_2/backend/src/main/java/com/hackaton/energiaapi/controller/AnalisisEnergeticoController.java
+/home/thiagol/Hackaton_G9_Server_2/backend/src/main/java/com/hackaton/energiaapi/dto/AnalisisRequestDTO.java
+/home/thiagol/Hackaton_G9_Server_2/backend/src/main/java/com/hackaton/energiaapi/dto/AnalisisResponseDTO.java
+/home/thiagol/Hackaton_G9_Server_2/backend/src/main/java/com/hackaton/energiaapi/entity/AnalisisEnergetico.java
+/home/thiagol/Hackaton_G9_Server_2/backend/src/main/java/com/hackaton/energiaapi/exception/GlobalExceptionHandler.java
+/home/thiagol/Hackaton_G9_Server_2/backend/src/main/java/com/hackaton/energiaapi/repository/AnalisisEnergeticoRepository.java
+/home/thiagol/Hackaton_G9_Server_2/backend/src/main/java/com/hackaton/energiaapi/service/AnalisisEnergeticoService.java
+/home/thiagol/Hackaton_G9_Server_2/backend/src/main/java/com/hackaton/energiaapi/service/AnalisisEnergeticoServiceImpl.java
