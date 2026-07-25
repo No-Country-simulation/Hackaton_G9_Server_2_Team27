@@ -1,10 +1,12 @@
 package EnegiAI.Backend.service;
 
 import EnegiAI.Backend.dto.ConsumoRequest;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Service
 public class RecomendacionService {
     public List<String> generarRecomendaciones(ConsumoRequest request) {
         List<String> recomendaciones = new ArrayList<>();

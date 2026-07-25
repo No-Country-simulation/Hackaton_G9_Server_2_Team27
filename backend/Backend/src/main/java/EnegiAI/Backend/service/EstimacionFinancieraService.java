@@ -1,7 +1,9 @@
 package EnegiAI.Backend.service;
 
 import EnegiAI.Backend.dto.ConsumoRequest;
+import org.springframework.stereotype.Service;
 
+@Service
 public class EstimacionFinancieraService {
 
     private static final double TARIFA_KWH = 0.75;
