@@ -29,7 +29,7 @@ public class AnalisisEnergeticoService {
         Categoria categoria = clasificacion.categoria();
         double probabilidad = clasificacion.probabilidad();
 
-        List<String> recomendaciones = recomendacionService.generarRecomendaciones(request);
+        List<String> recomendaciones = recomendacionService.generarRecomendaciones(request, categoria);
         double costoEstimado = estimacionFinancieraService.calcularCostoMensual(request);
 
         // 2. Crear la entidad de dominio

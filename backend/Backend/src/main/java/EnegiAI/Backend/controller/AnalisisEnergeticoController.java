@@ -1,5 +1,6 @@
 package EnegiAI.Backend.controller;
 
+import EnegiAI.Backend.dto.AnalisisResponse;
 import EnegiAI.Backend.dto.ConsumoRequest;
 import EnegiAI.Backend.service.AnalisisEnergeticoService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,10 +38,10 @@ public class AnalisisEnergeticoController {
      * @return Respuesta HTTP con el resultado del análisis energético.
      */
         @PostMapping("/analisis-energetico")
-        public ResponseEntity<?> realizarAnalisis(@RequestBody @Valid ConsumoRequest consumoRequestJson){
-            analisisEnergeticoService.procesarAnalisis(consumoRequestJson);
+        public ResponseEntity<AnalisisResponse> realizarAnalisis(@RequestBody @Valid ConsumoRequest consumoRequestJson){
+            var analisis= analisisEnergeticoService.procesarAnalisis(consumoRequestJson);
             System.out.println("FUNCIONA!");
-            return ResponseEntity.ok(consumoRequestJson);
+            return ResponseEntity.ok(analisis);
             //Retorna 200 OK no un 201 CREATED, dado que el análisis no persiste en ninguna BD aún
         }
 //    @GetMapping("/analisis-energetico/{id}")
