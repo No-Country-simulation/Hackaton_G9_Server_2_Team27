@@ -1,0 +1,367 @@
+> **Tech Lead Review** · Análisis completo del repositorio `Hackaton_G9_Server_2` · Julio 2026
+
+---
+
+## 1. 📋 Resumen Ejecutivo del Proyecto
+
+**EnergiAI** es una plataforma SaaS de diagnóstico de eficiencia energética orientada al usuario doméstico y comercial. Su propuesta de valor consiste en analizar el perfil de consumo eléctrico de un inmueble —a través de un formulario intuitivo— y devolver en tiempo real una **clasificación, estimación de costos y plan de acción personalizado**, potenciado por un ensamble de modelos de Machine Learning.
+
+### Arquitectura General
+
+El sistema está compuesto por **tres microservicios desacoplados**, orquestados mediante Docker Compose sobre una red bridge interna (`energia-net`):
+
+| Capa | Rol | Tecnología Principal |
+|------|-----|----------------------|
+| **Frontend** | SPA estática servida por Nginx | HTML5 + Vanilla JS + Bootstrap 5 |
+| **Backend API** | Orquestador de lógica de negocio, persistencia y proxy ML | Java 17 · Spring Boot 3.3.4 · H2 JPA |
+| **ML Service** | Motor de inferencia multi-modelo con votación | Python 3.11 · FastAPI · scikit-learn · XGBoost |
+
+### Ensamble de Machine Learning — 4 Modelos
+
+El núcleo diferenciador del sistema es un **ensamble de votación por mayoría (Hard Voting)** compuesto por cuatro clasificadores entrenados sobre el mismo conjunto de features:
+
+| Modelo | Artefacto `.pkl` | Peso en Decisión | Tamaño en Disco |
+|--------|------------------|-------------------|-----------------|
+| **XGBoost** *(modelo principal)* | `energia_pipeline_mvp.pkl` | Árbitro de desempate | 867 KB |
+| **Regresión Logística** | `modelo_regresion_logistica.pkl` | 1 voto | 4.1 KB |
+| **K-Nearest Neighbors (KNN)** | `modelo_knn.pkl` | 1 voto | 1.04 MB |
+| **Random Forest** | `modelo_random_forest.pkl` | 1 voto | 19.7 MB |
+
+**Motor de votación y desempate:**
+- Con **≥ 3 votos concordantes** → consenso por mayoría directa.
+- Con **2 vs 2** (empate perfecto) → **XGBoost como árbitro** (criterio: mayor F1-score en validación).
+- El método de decisión queda registrado en la respuesta JSON como `metodo_decision`.
+
+### Componentes Visuales de Respuesta
+
+El frontend renderiza cuatro componentes de diagnóstico a partir del `AnalisisResponseDTO`:
+
+| Componente | Descripción | Origen del dato |
+|------------|-------------|-----------------|
+| **Categoría** | Badge cromático: 🟢 Eficiente / 🟡 Moderado / 🔴 Ineficiente | `data.categoria` (ML) |
+| **Costo Estimado** | Estimación mensual en USD (`consumo_kwh × $0.75`) | `data.costo_estimado_mensual` |
+| **Nivel de Confianza** | Barra de progreso animada (%) derivada de `probabilidad` | `data.probabilidad` (XGBoost `predict_proba`) |
+| **Recomendaciones** | Lista contextual + plan de acción por categoría (hasta 5 ítems) | `data.recomendaciones` (Java service) |
+
+---
+
+## 2. 🗺️ Mapa de Arquitectura y Flujo de Datos
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        USUARIO / NAVEGADOR                          │
+│              http://localhost:3000  (SPA Vanilla JS)                │
+└──────────────────────────────┬──────────────────────────────────────┘
+                               │ HTTP POST /analisis-energetico
+                               │ (JSON payload camelCase + snake_case)
+                               ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│          FRONTEND  ·  Nginx:alpine  ·  Container: frontend-energia  │
+│                                                                     │
+│  index.html + app.js  ──►  fetch(API_URL)  ──►  renderResults()    │
+│  [Sliders, Presets, Skeleton Loader, Ensamble Cards, PDF Export]   │
+└──────────────────────────────┬──────────────────────────────────────┘
+                               │ HTTP  →  energia-net (Docker bridge)
+                               │ Target: backend-api:8080
+                               ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│   BACKEND API  ·  eclipse-temurin:17-jre-alpine  ·  backend-api    │
+│                                                                     │
+│  AnalisisEnergeticoController  (POST /analisis-energetico)          │
+│          │  @Valid AnalisisRequestDTO                               │
+│          ▼                                                          │
+│  AnalisisEnergeticoServiceImpl                                      │
+│    ├── RestTemplate.postForEntity(mlServiceUrl, payload)            │
+│    │       │                                                        │
+│    │       ▼  HTTP → ml-service:8000 (energia-net)                 │
+│    │   ┌──────────────────────────────────────────────────────┐    │
+│    │   │  ML SERVICE  ·  python:3.11-slim  ·  ml-service      │    │
+│    │   │                                                      │    │
+│    │   │  FastAPI  POST /analisis-energetico                  │    │
+│    │   │    ├── XGBoost       predict() + predict_proba()     │    │
+│    │   │    ├── Reg. Logística predict()                      │    │
+│    │   │    ├── KNN           predict()                       │    │
+│    │   │    └── Random Forest predict()                       │    │
+│    │   │              │                                       │    │
+│    │   │   Motor de Votación (Counter + desempate XGB)        │    │
+│    │   │              │                                       │    │
+│    │   │   JSON: {categoria, probabilidad, costo, detalles}   │    │
+│    │   └──────────────────────────────────────────────────────┘    │
+│    │                                                               │
+│    ├── generarRecomendaciones() + obtenerRecomendaciones()         │
+│    │                                                               │
+│    └── repository.save(AnalisisEnergetico)                        │
+│                 │                                                  │
+│                 ▼                                                  │
+│   ┌──────────────────────────────────────────────────────────┐    │
+│   │  H2 DATABASE  ·  jdbc:h2:file:/app/data/energiadb        │    │
+│   │  Volume: ./backend/data:/app/data  (persistencia local)  │    │
+│   │  Tabla: ANALISIS_ENERGETICO + ANALISIS_ENERGETICO_RECO.. │    │
+│   └──────────────────────────────────────────────────────────┘    │
+│                                                                     │
+│  ← ResponseEntity<AnalisisResponseDTO>                             │
+└──────────────────────────────┬──────────────────────────────────────┘
+                               │ JSON Response → Frontend
+                               ▼
+                      renderResults(data) en DOM
+```
+
+### Tabla de Puertos
+
+| Servicio | Tecnología | Puerto Host | Puerto Contenedor | Red Docker |
+|----------|------------|-------------|-------------------|------------|
+| `frontend-energia` | Nginx:alpine | **3000** | 80 | `energia-net` |
+| `backend-api` | eclipse-temurin:17-jre-alpine | **8080** | 8080 | `energia-net` |
+| `ml-service` | python:3.11-slim + uvicorn | **8000** | 8000 | `energia-net` |
+| H2 Console (embed) | H2 in-process | **8080** | `/h2-console` path | — |
+
+> **Red interna:** `energia-net` (driver: bridge). La comunicación inter-servicio usa nombres DNS internos de Docker (`ml-service:8000`, `backend-api:8080`), nunca `localhost`.
+
+---
+
+## 3. 📁 Diccionario de Archivos Clave
+
+### 🌐 Frontend
+
+| Archivo | Responsabilidad |
+|---------|----------------|
+| [index.html](file:///home/thiagol/Hackaton_G9_Server_2/frontend-app/index.html) | Estructura HTML completa de la SPA: formulario de entrada con sliders, preset cards (Eficiente/Moderado/Ineficiente), panel de resultados con skeleton loader, badges de categoría, barra de confianza, tarjetas del ensamble de 4 modelos y botón de exportación PDF |
+| [app.js](file:///home/thiagol/Hackaton_G9_Server_2/frontend-app/app.js) | Toda la lógica de cliente: sincronización de sliders, submit handler async/await, payload dual camelCase+snake_case, `setView()` para transiciones de estado (loading/results/error), `renderResults()` mapeando el DTO al DOM, lógica de confianza, 3 presets de demostración |
+| [Dockerfile](file:///home/thiagol/Hackaton_G9_Server_2/frontend-app/Dockerfile) | Imagen `nginx:alpine`; copia `index.html` y `app.js` a `/usr/share/nginx/html/` |
+
+### ☕ Backend Java
+
+| Archivo | Responsabilidad |
+|---------|----------------|
+| [AnalisisEnergeticoController.java](file:///home/thiagol/Hackaton_G9_Server_2/backend/src/main/java/com/hackaton/energiaapi/controller/AnalisisEnergeticoController.java) | Controlador REST: `POST /analisis-energetico` (análisis), `GET /analisis-energetico` (historial), `GET /analisis-energetico/{id}` (por ID). CORS abierto (`*`), Swagger/OpenAPI documentado |
+| [AnalisisEnergeticoServiceImpl.java](file:///home/thiagol/Hackaton_G9_Server_2/backend/src/main/java/com/hackaton/energiaapi/service/AnalisisEnergeticoServiceImpl.java) | Lógica de negocio central: orquesta la llamada al ML Service vía `RestTemplate`, implementa fallback local por categoría de consumo, genera recomendaciones contextuales, persiste en H2 y construye el `AnalisisResponseDTO` |
+| [AnalisisRequestDTO.java](file:///home/thiagol/Hackaton_G9_Server_2/backend/src/main/java/com/hackaton/energiaapi/dto/AnalisisRequestDTO.java) | DTO de entrada con validaciones Bean Validation (`@NotNull`, `@Positive`, `@Min`, `@Max`) y soporte dual de naming (camelCase + snake_case) mediante `@JsonAlias` y `@JsonNaming(SnakeCaseStrategy)` |
+| [AnalisisResponseDTO.java](file:///home/thiagol/Hackaton_G9_Server_2/backend/src/main/java/com/hackaton/energiaapi/dto/AnalisisResponseDTO.java) | DTO de salida con estructura anidada (`DetallesDTO`): id, categoría, probabilidad, costo, recomendaciones, votos detallados, método de decisión y latencias por modelo |
+| [AnalisisEnergetico.java](file:///home/thiagol/Hackaton_G9_Server_2/backend/src/main/java/com/hackaton/energiaapi/entity/AnalisisEnergetico.java) | Entidad JPA que mapea la tabla `ANALISIS_ENERGETICO`. Usa `@ElementCollection` para `recomendaciones` (lista) y `@PrePersist` para `fechaCreacion` automática |
+| [AnalisisEnergeticoRepository.java](file:///home/thiagol/Hackaton_G9_Server_2/backend/src/main/java/com/hackaton/energiaapi/repository/AnalisisEnergeticoRepository.java) | Interface `JpaRepository` con método derivado `findAllByOrderByFechaCreacionDesc()` para el historial cronológico descendente |
+| [GlobalExceptionHandler.java](file:///home/thiagol/Hackaton_G9_Server_2/backend/src/main/java/com/hackaton/energiaapi/exception/GlobalExceptionHandler.java) | `@RestControllerAdvice` global: maneja `MethodArgumentNotValidException` (400 con mapa de errores por campo) y `Exception` genérica (500 con timestamp) |
+| [application.properties](file:///home/thiagol/Hackaton_G9_Server_2/backend/src/main/resources/application.properties) | Configuración Spring Boot: URL del ML Service, datasource H2 en modo FILE persistente (`/app/data/energiadb`), DDL auto `update`, H2 Console habilitada |
+| [pom.xml](file:///home/thiagol/Hackaton_G9_Server_2/backend/pom.xml) | Dependencias Maven: Spring Boot 3.3.4, Lombok, Spring Data JPA, H2, springdoc-openapi 2.5.0 (Swagger UI), Bean Validation |
+| [Dockerfile](file:///home/thiagol/Hackaton_G9_Server_2/backend/Dockerfile) | Build multi-stage: Stage 1 `maven:3.9-eclipse-temurin-17` compila el JAR (`-DskipTests`); Stage 2 `eclipse-temurin:17-jre-alpine` ejecuta el artefacto |
+
+### 🐍 ML Service
+
+| Archivo | Responsabilidad |
+|---------|----------------|
+| [main.py](file:///home/thiagol/Hackaton_G9_Server_2/ml-service/main.py) | Aplicación FastAPI completa: carga los 4 artefactos `.pkl` al inicio con fallback de rutas (`./` y `modelos/`), define el esquema Pydantic `EnergyRequest`, implementa `POST /analisis-energetico` con inferencia paralela de los 4 modelos, motor de votación `Counter`, desempate XGBoost y construcción del JSON de respuesta con latencias individuales |
+| [requirements.txt](file:///home/thiagol/Hackaton_G9_Server_2/ml-service/requirements.txt) | Dependencias Python: FastAPI 0.139.2, uvicorn 0.51.0, scikit-learn 1.6.1, joblib 1.5.3, pandas, numpy, xgboost (sin pin de versión), pydantic 2.13.4 |
+| [Dockerfile](file:///home/thiagol/Hackaton_G9_Server_2/ml-service/Dockerfile) | Imagen `python:3.11-slim`; instala `curl` para healthcheck, instala requirements, copia código y copia los `.pkl` desde `modelos/` al WORKDIR raíz (`./`) para compatibilidad con `load_model()` |
+| `modelos/energia_pipeline_mvp.pkl` | Pipeline XGBoost serializado (867 KB) — árbitro del ensamble |
+| `modelos/modelo_regresion_logistica.pkl` | Pipeline Regresión Logística serializado (4.1 KB) |
+| `modelos/modelo_knn.pkl` | Pipeline KNN serializado (1.04 MB) |
+| `modelos/modelo_random_forest.pkl` | Pipeline Random Forest serializado (19.7 MB) — modelo más pesado |
+
+### 🐳 DevOps
+
+| Archivo | Responsabilidad |
+|---------|----------------|
+| [docker-compose.yml](file:///home/thiagol/Hackaton_G9_Server_2/docker-compose.yml) | Orquestación de los 3 servicios en `energia-net`. Define healthcheck para `ml-service` (urllib HTTP a `/docs`), `depends_on` con `condition: service_healthy` para `backend-api`, y volume binding para persistencia H2 |
+| [readme.md](file:///home/thiagol/Hackaton_G9_Server_2/readme.md) | Documentación de despliegue rápido: tabla de servicios, pasos de ejecución local, puntos de acceso y comandos de mantenimiento |
+| [test-mvp-examples.sh](file:///home/thiagol/Hackaton_G9_Server_2/test-mvp-examples.sh) | Script bash de prueba de integración E2E con 3 escenarios: Eficiente (140 kWh), Moderado (340 kWh) y el ejemplo oficial del Hackathon Ineficiente (680 kWh) — requiere `jq` |
+
+### 📊 Ciencia de Datos
+
+| Archivo | Responsabilidad |
+|---------|----------------|
+| `ciencia_datos/Analisis_energetico_G9.ipynb` | Notebook Jupyter (878 KB) que contiene el EDA, preprocesamiento de datos, entrenamiento de los 4 modelos (`XGBClassifier`, `LogisticRegression`, `KNeighborsClassifier`, `RandomForestClassifier`), evaluación de métricas (F1, accuracy, matriz de confusión) y serialización final de los pipelines `.pkl` |
+
+---
+
+## 4. 🔬 Diagnóstico de Integración — Estado Actual
+
+### 🟠 ALTO — Hardcoded `API_URL` en Frontend: Fallo en Producción/OCI
+
+**Síntoma:** La URL de la API está codificada como `localhost:8080` en [app.js línea 89](file:///home/thiagol/Hackaton_G9_Server_2/frontend-app/app.js).
+
+**Impacto:** Al desplegar en OCI u otro ambiente cloud, el navegador del usuario intentará conectarse a `localhost:8080` en su propia máquina (que no existe), rompiendo completamente la funcionalidad. El sistema solo funciona si el usuario ejecuta todo en su propia máquina.
+
+```diff
+// app.js — línea 89
+- const API_URL = "http://localhost:8080/analisis-energetico";
++ const API_URL = window.ENERGIA_API_URL || "http://localhost:8080/analisis-energetico";
+```
+
+**Corrección recomendada (producción):** Inyectar la URL via variable de entorno en el `index.html` a través de un script de entrada de Nginx, o usar un Nginx `proxy_pass` que enrute `/api/` hacia `backend-api:8080` y ajustar la URL en el frontend a una ruta relativa `/api/analisis-energetico`.
+
+---
+
+### 🟠 ALTO — `RestTemplate` sin Timeout: Riesgo de Thread Starvation
+
+**Síntoma:** El `RestTemplate` en [AnalisisEnergeticoServiceImpl.java línea 29](file:///home/thiagol/Hackaton_G9_Server_2/backend/src/main/java/com/hackaton/energiaapi/service/AnalisisEnergeticoServiceImpl.java) se instancia directamente sin configurar `connect timeout` ni `read timeout`.
+
+**Impacto:** Si el `ml-service` tarda en responder (cold start del modelo RF de 19.7 MB o carga alta), los threads del pool de Spring quedan bloqueados indefinidamente. En un contexto de Hackathon con múltiples evaluadores, esto puede provocar que el backend quede irresponsivo.
+
+```diff
+- private final RestTemplate restTemplate = new RestTemplate();
++ private final RestTemplate restTemplate;
++
++ public AnalisisEnergeticoServiceImpl(AnalisisEnergeticoRepository repository) {
++     this.repository = repository;
++     SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
++     factory.setConnectTimeout(3000);  // 3 segundos
++     factory.setReadTimeout(10000);    // 10 segundos
++     this.restTemplate = new RestTemplate(factory);
++ }
+```
+
+> [!NOTE]
+> El campo `private final RestTemplate restTemplate = new RestTemplate()` también impide la inyección de dependencias correcta con Lombok `@RequiredArgsConstructor`. La instancia no es un Bean de Spring y no puede ser interceptada ni testeada con mocks.
+
+---
+
+### 🟠 ALTO — `xgboost` y `numpy`/`pandas`/`scipy` sin Pin de Versión en `requirements.txt`
+
+**Síntoma:** Las líneas 10, 11, 12 y 23 de [requirements.txt](file:///home/thiagol/Hackaton_G9_Server_2/ml-service/requirements.txt) no especifican versión.
+
+**Impacto:** Un rebuild de imagen Docker puede instalar versiones incompatibles con el artefacto `.pkl` entrenado. Un modelo serializado con `xgboost==2.0.x` puede fallar al deserializarse con `xgboost==2.1.x`. Esto causa `sys.exit(1)` al arrancar el contenedor y **colapso total del ML Service**.
+
+```diff
+- numpy
+- pandas
+- scipy
+- xgboost
++ numpy==1.26.4
++ pandas==2.2.2
++ scipy==1.13.1
++ xgboost==2.1.4
+```
+
+---
+
+### 🟡 MEDIO — Lógica de Confianza Incorrecta en Frontend (Método "3/3 votos")
+
+**Síntoma:** El código en [app.js líneas 239-246](file:///home/thiagol/Hackaton_G9_Server_2/frontend-app/app.js) busca la cadena `"3/3"` y `"2/3"` en `metodo_decision`, pero el ML Service genera mensajes en formato `"Consenso por mayoría (3/4 votos)"` o `"Consenso por mayoría (2/4 votos)"`.
+
+**Impacto:** La condición `includes("3/3")` **nunca se cumple**, por lo que la barra de confianza siempre cae al branch `else` y muestra el valor bruto de `probabilidad` XGBoost en lugar del valor de consenso real. El indicador visual de confianza colectiva del ensamble queda siempre en modo degradado.
+
+```diff
+// app.js — líneas 239-243
+- if (metodoDecision && metodoDecision.includes("3/3")) {
+-     prob = 100;
+- } else if (metodoDecision && metodoDecision.includes("2/3")) {
+-     prob = 67;
+- } else {
++ if (metodoDecision && metodoDecision.includes("4/4")) {
++     prob = 100;
++ } else if (metodoDecision && metodoDecision.includes("3/4")) {
++     prob = 85;
++ } else if (metodoDecision && metodoDecision.includes("2/4")) {
++     prob = 67;
++ } else {
+```
+
+---
+
+### 🟡 MEDIO — H2 Console Expuesta en Producción
+
+**Síntoma:** [application.properties línea 10](file:///home/thiagol/Hackaton_G9_Server_2/backend/src/main/resources/application.properties) tiene `spring.h2.console.enabled=true` sin restricción de perfil.
+
+**Impacto:** Al desplegar en OCI, la consola H2 en `http://<ip-oci>:8080/h2-console` queda accesible públicamente, exponiendo la base de datos completa sin autenticación (usuario `sa`, contraseña vacía). Riesgo de seguridad **crítico en ambiente de producción**.
+
+```diff
+# application.properties
+- spring.h2.console.enabled=true
++ # spring.h2.console.enabled=true  # Solo habilitar en perfil 'dev'
+```
+
+**Corrección definitiva:** Crear `application-dev.properties` con la consola habilitada y dejarla deshabilitada en el archivo principal.
+
+---
+
+### 🟡 MEDIO — `desempateBadge` Nunca Se Activa (Campo Faltante en DTO)
+
+**Síntoma:** [app.js línea 301](file:///home/thiagol/Hackaton_G9_Server_2/frontend-app/app.js) evalúa `data.desempateAplicado`, pero este campo **no existe** en `AnalisisResponseDTO.java` ni en el JSON que retorna el ML Service.
+
+**Impacto:** El badge de "Desempate Aplicado" en la UI siempre quedará oculto (`display: none`), incluso cuando el motor de desempate XGBoost haya sido activado. Funcionalidad visual rota silenciosamente.
+
+```diff
+// AnalisisResponseDTO.java — agregar campo
+  private Double costoEstimadoMensual;
+  private List<String> recomendaciones;
++ private Boolean desempateAplicado;  // true cuando se usó XGBoost como árbitro
+  private DetallesDTO detalles;
+```
+
+```diff
+// AnalisisEnergeticoServiceImpl.java — en la construcción del DTO
+  return AnalisisResponseDTO.builder()
+      .id(entidad.getId())
+      .categoria(categoria)
+      .probabilidad(probabilidad)
+      .costoEstimadoMensual(costoEstimado)
+      .recomendaciones(recomendaciones)
++     .desempateAplicado(metodoDecision != null && metodoDecision.startsWith("Desempate"))
+      .detalles(detallesDTO)
+      .build();
+```
+
+---
+
+### ✅ Integración Exitosa — Capas Verificadas
+
+Las siguientes integraciones fueron **auditadas sin bugs detectados**:
+
+| Capa | Estado | Detalle |
+|------|--------|---------|
+| **Contrato Java → Python (campos de entrada)** | ✅ Correcto | `AnalisisRequestDTO` mapea exactamente los 5 campos requeridos por `EnergyRequest` de FastAPI. El backend envía `consumoKwh`, `usoHorarioPico`, `cantidadEquipos`, `tipoInmueble`, `horasAltoConsumo` — todos alineados |
+| **Contrato Python → Java (JSON de respuesta)** | ✅ Correcto | El `ServiceImpl` deserializa correctamente `categoria`, `probabilidad`, `detalles.votos_detallados`, `detalles.metodo_decision` y `detalles.latencias_ms` |
+| **Motor de votación y desempate** | ✅ Correcto | La lógica `Counter` + desempate XGBoost es matemáticamente correcta para 4 modelos |
+| **Fallback local en backend** | ✅ Correcto | Si el ML Service está offline, el backend responde con categoría derivada del consumo y `probabilidad=0.88` |
+| **Persistencia H2** | ✅ Correcto | Volume binding, DDL `update`, `@PrePersist` funcional y `findAllByOrderByFechaCreacionDesc()` implementado |
+| **Healthcheck Docker** | ✅ Correcto | `depends_on: condition: service_healthy` garantiza que el backend no arranca hasta que el ML Service esté listo |
+| **Validación de inputs** | ✅ Correcto | Bean Validation en el DTO + `GlobalExceptionHandler` devuelve 400 con mapa de errores descriptivo |
+| **Dockerfile multi-stage Backend** | ✅ Correcto | Build con Maven en JDK-17, runtime con JRE Alpine — imagen optimizada |
+| **Carga de modelos ML** | ✅ Correcto | Doble búsqueda de rutas (`./` + `modelos/`) y `COPY modelos/*.pkl ./` en Dockerfile garantizan disponibilidad |
+
+---
+
+## 5. ✅ Checklist Final de MVP
+
+| Requisito | Estado | Detalle |
+|-----------|--------|---------|
+| API REST funcional con endpoint POST principal | ✅ | `POST /analisis-energetico` implementado y documentado con OpenAPI/Swagger |
+| Clasificación energética (Eficiente / Moderado / Ineficiente) | ✅ | Ensamble de 4 modelos retorna la categoría correctamente |
+| Estimación de costo mensual | ✅ | Calculado como `consumo_kwh × $0.75` en ambas capas (ML + Java) |
+| Nivel de confianza / probabilidad | ⚠️ | Valor calculado correctamente en el backend, pero la lógica de mapeo en el frontend tiene el bug de `"3/3"` vs `"4/4"` |
+| Recomendaciones personalizadas por categoría | ✅ | 3-5 recomendaciones contextuales generadas en Java, diferenciadas por categoría y perfil de uso |
+| Ensamble de 4 modelos de ML | ✅ | XGBoost, Regresión Logística, KNN y Random Forest operativos con sus artefactos `.pkl` |
+| Motor de votación y desempate | ✅ | Hard Voting con Counter + árbitro XGBoost implementado y funcional |
+| Persistencia del historial de análisis | ✅ | H2 en modo FILE con volumen Docker, entidad JPA completa y endpoint GET historial |
+| Dockerización completa de los 3 servicios | ✅ | Imágenes construibles, healthcheck, depends_on con condición, network bridge |
+| Frontend interactivo con visualización de resultados | ✅ | SPA con skeleton loader, badges, barras de confianza, tarjetas de modelos, presets de demostración |
+| Fallback ante fallo del ML Service | ✅ | Backend con lógica de fallback local y log de warning |
+| Documentación técnica del proyecto | ✅ | `readme.md` con arquitectura, comandos y access points |
+| Despliegue en nube (OCI) | ❌ | Pendiente — URL hardcodeada en frontend imposibilita el despliegue directo |
+| Exportación de informe PDF | ⚠️ | Botón presente en UI pero funcionalidad placeholder (muestra `alert()`) |
+| Dependencias de ML versionadas (reproducibilidad) | ⚠️ | `xgboost`, `numpy`, `pandas`, `scipy` sin versión fija → riesgo de build no reproducible |
+| H2 Console securizada para producción | ⚠️ | Console habilitada sin restricción de perfil, expuesta en puerto 8080 |
+| Badge de desempate funcional | ❌ | Campo `desempateAplicado` faltante en el DTO de Java — badge siempre oculto |
+
+---
+
+### ⚡ Acciones Pendientes — Orden de Prioridad
+
+1. **[CRÍTICO — Bloquea deploy OCI]** Reemplazar `API_URL` hardcodeada en `app.js` por una URL dinámica o configurar un proxy Nginx inverso que enrute las llamadas API a través del mismo host, eliminando la dependencia de `localhost`.
+
+2. **[CRÍTICO — Reproducibilidad]** Pinear las versiones de `xgboost`, `numpy`, `pandas` y `scipy` en `requirements.txt` con las versiones exactas del entorno de entrenamiento del Notebook para garantizar que los `.pkl` sean siempre deserializables.
+
+3. **[ALTO — Estabilidad]** Configurar timeouts de conexión y lectura en el `RestTemplate` del backend (3s connect / 10s read) para evitar thread starvation ante latencias elevadas del ML Service.
+
+4. **[ALTO — UI/UX]** Corregir la condición de confianza en `app.js` de `"3/3"` / `"2/3"` a `"4/4"` / `"3/4"` / `"2/4"` para que la barra de confianza refleje correctamente el consenso del ensamble.
+
+5. **[ALTO — Feature completa]** Agregar el campo `desempateAplicado: Boolean` al `AnalisisResponseDTO` y propagarlo desde el `ServiceImpl` para activar correctamente el badge de desempate en el frontend.
+
+6. **[MEDIO — Seguridad]** Deshabilitar `spring.h2.console.enabled` en el `application.properties` principal y habilitarlo solo en un perfil `dev` (`application-dev.properties`) antes del despliegue en OCI.
+
+7. **[MEDIO — Observabilidad]** Agregar Spring Actuator (`spring-boot-starter-actuator`) al `pom.xml` para exponer endpoints de health, info y métricas básicas, facilitando el monitoreo en producción.
+
+8. **[MEDIO — Exportación PDF]** Implementar la funcionalidad real de exportación PDF en el frontend usando `jsPDF` o `html2canvas` para generar el informe de auditoría energética prometido en la UI.
+
+9. **[LEVE — Deuda técnica]** Refactorizar `RestTemplate` como `@Bean` de Spring gestionado por el contexto, permitiendo testeo con mocks (`MockRestServiceServer`) y configuración centralizada.
+
+10. **[LEVE — Calidad de código]** Completar los campos de metadatos en el `pom.xml` (nombre, descripción, URL, developers, SCM) y limpiar el directorio `target/` del control de versiones (agregar al `.gitignore`).
