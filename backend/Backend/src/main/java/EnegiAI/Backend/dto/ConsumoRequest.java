@@ -13,7 +13,7 @@ import jakarta.validation.constraints.*;
 public record ConsumoRequest(
         @NotNull(message = "El consumo en kWh es obligatorio")
         @Positive(message = "El consumo en kWh debe ser mayor a cero")
-        @JsonProperty("consumoKwt")
+        @JsonProperty("consumoKwh")
         Double consumo_kwh,
 
         @NotNull(message = "El campo de uso horario pico es obligatorio")
