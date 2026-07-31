@@ -2,6 +2,7 @@ package EnegiAI.Backend.service;
 
 import EnegiAI.Backend.dto.ConsumoRequest;
 import EnegiAI.Backend.dto.MLPredictionResponse;
+import EnegiAI.Backend.model.Categoria;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
@@ -43,6 +44,6 @@ public class DataScienceClient {
     }
 
     private MLPredictionResponse valorPorDefecto() {
-        return new MLPredictionResponse("Moderado", 0.5);
+        return new MLPredictionResponse(Categoria.Moderado, 0.5);
     }
 }
