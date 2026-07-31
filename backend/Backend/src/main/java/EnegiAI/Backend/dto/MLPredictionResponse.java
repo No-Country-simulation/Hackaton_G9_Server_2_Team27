@@ -10,7 +10,7 @@ import EnegiAI.Backend.model.Categoria;
  * devuelto por el modelo de Data Science.
  */
 public record MLPredictionResponse(
-        Categoria categoria,
+        String categoria,
         Double probabilidad
 ) {
 }
