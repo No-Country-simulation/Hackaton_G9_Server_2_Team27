@@ -1,7 +1,10 @@
 package EnegiAI.Backend.model;
 
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.*;
-import java.util.List;
+
 
 /**
  * Representa el concepto completo de un analisis energetico, resultado
@@ -12,12 +15,12 @@ import java.util.List;
  * El DTO AnalisisResponse decide que parte de esto se expone hacia afuera.
  */
 @AllArgsConstructor
+@NoArgsConstructor
 @Getter
-
+@Embeddable
 public class AnalisisEnergetico {
-
-    private final Categoria categoria;
-    private final double probabilidad;
-    private final List<String> recomendaciones;
-    private final double costoEstimadoMensual;
+    @Enumerated(EnumType.STRING)
+    private Categoria categoria;
+    private double probabilidad;
+    private double costoEstimadoMensual;
 }

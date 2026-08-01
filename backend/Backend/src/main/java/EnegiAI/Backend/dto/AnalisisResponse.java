@@ -1,6 +1,9 @@
 package EnegiAI.Backend.dto;
 
 import EnegiAI.Backend.model.AnalisisEnergetico;
+import EnegiAI.Backend.model.AnalisisEnergeticoEntity;
+
+import java.util.List;
 
 /**
  * DTO raíz que representa la respuesta completa del análisis energético.
@@ -28,14 +31,14 @@ public record AnalisisResponse(
      *
      * @param analisisEnergetico Resultado completo del análisis energético.
      */
-    public AnalisisResponse(AnalisisEnergetico  analisisEnergetico) {
+    public AnalisisResponse(AnalisisEnergetico  analisisEnergetico, List<String> recomendaciones) {
         this(
                 new CategoriaResponse(
                         analisisEnergetico.getCategoria().name(),
                         analisisEnergetico.getProbabilidad()
                 ),
                 new RecomendacionesResponse(
-                        analisisEnergetico.getRecomendaciones()
+                        recomendaciones
                 ),
                 new EstimacionFinancieraResponse(
                         analisisEnergetico.getCostoEstimadoMensual()
