@@ -11,9 +11,29 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Centraliza el manejo de las excepciones producidas durante la ejecución
+ * de la API REST.
+ *
+ * Esta clase intercepta las excepciones lanzadas por los controladores y
+ * las transforma en respuestas HTTP con una estructura uniforme, evitando
+ * exponer detalles internos de la aplicación y facilitando el consumo
+ * consistente de los errores por parte del cliente.
+ */
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    /**
+     * Procesa los errores generados por las validaciones de los DTO de entrada.
+     *
+     * Cuando una solicitud incumple las restricciones definidas mediante
+     * Bean Validation, este método construye una respuesta con código
+     * HTTP 400 (Bad Request) que incluye el detalle de cada campo inválido.
+     *
+     * @param ex Excepción que contiene el resultado de las validaciones fallidas.
+     * @return Respuesta HTTP con el detalle de los errores de validación.
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidationErrors(MethodArgumentNotValidException ex) {
         Map<String, String> errores = new HashMap<>();
@@ -40,6 +60,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(ex.getStatusCode()).body(body);
     }
 
+    /**
+     * Maneja cualquier excepción no contemplada por otros controladores
+     * de excepciones específicos.
+     *
+     * Su propósito es devolver una respuesta HTTP 500 (Internal Server Error)
+     * con una estructura consistente, evitando que las excepciones lleguen
+     * sin controlar hasta el cliente.
+     *
+     * @param ex Excepción producida durante el procesamiento de la solicitud.
+     * @return Respuesta HTTP indicando un error interno del servidor.
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex) {
         Map<String, Object> body = new HashMap<>();
