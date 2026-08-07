@@ -22,6 +22,7 @@ import java.util.List;
  * para posteriormente devolver una respuesta HTTP apropiada.
  */
 @RestController
+@CrossOrigin(origins = "*")
 public class AnalisisEnergeticoController {
 
 
