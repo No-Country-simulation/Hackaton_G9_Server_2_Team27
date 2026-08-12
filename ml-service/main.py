@@ -13,13 +13,13 @@ app = FastAPI(title="EnergiAI ML Ensamble (4 Modelos)", version="1.0.0")
 # 1. ESQUEMA DE ENTRADA (contrato con Java)
 # ==========================================
 class EnergyRequest(BaseModel):
-    consumoKwh: float
-    usoHorarioPico: bool
-    cantidadEquipos: int
-    tipoInmueble: str
-    horasAltoConsumo: int
-    metrosCuadrados: float = None
-    cantidadPersonas: int = None
+    consumo_kwh: float
+    uso_horario_pico: bool
+    cantidad_equipos: int
+    tipo_inmueble: str
+    horas_alto_consumo: int
+    metros_cuadrados: float = None
+    cantidad_personas: int = None
 
 
 # ==========================================
@@ -50,17 +50,17 @@ TARGET_MAPPING = {0: 'Eficiente', 1: 'Moderado', 2: 'Ineficiente'}
 # ==========================================
 def construir_dataframes(data: EnergyRequest):
     datos_base = {
-        'consumo_kwh': data.consumoKwh,
-        'uso_horario_pico': data.usoHorarioPico,
-        'cantidad_equipos': data.cantidadEquipos,
-        'horas_alto_consumo': data.horasAltoConsumo
+        'consumo_kwh': data.consumo_kwh,
+        'uso_horario_pico': data.uso_horario_pico,
+        'cantidad_equipos': data.cantidad_equipos,
+        'horas_alto_consumo': data.horas_alto_consumo
     }
 
     # XGBoost, Regresion Logistica y KNN esperan "tipo_vivienda"
-    df_vivienda = pd.DataFrame([{**datos_base, 'tipo_vivienda': data.tipoInmueble}])
+    df_vivienda = pd.DataFrame([{**datos_base, 'tipo_vivienda': data.tipo_inmueble}])
 
     # Random Forest esperan "tipo_inmueble" (nombre distinto, mismo dato)
-    df_inmueble = pd.DataFrame([{**datos_base, 'tipo_inmueble': data.tipoInmueble}])
+    df_inmueble = pd.DataFrame([{**datos_base, 'tipo_inmueble': data.tipo_inmueble}])
 
     return df_vivienda, df_inmueble
 
