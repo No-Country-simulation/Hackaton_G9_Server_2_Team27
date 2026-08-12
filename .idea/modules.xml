@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/Hackaton_G9_Server_2_Team27.iml" filepath="$PROJECT_DIR$/.idea/Hackaton_G9_Server_2_Team27.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ml-service/ml-service.iml" filepath="$PROJECT_DIR$/ml-service/ml-service.iml" />
     </modules>
   </component>
 </project>
