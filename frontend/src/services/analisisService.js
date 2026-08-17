@@ -48,3 +48,17 @@ export const verificarEstadoHealth = async () => {
     return null;
   }
 };
+
+/**
+ * Obtiene el listado completo de análisis realizados.
+ * @returns {Promise<Array>} Lista de AnalisisEntityDTO
+ */
+export const obtenerHistorialAnalisis = async () => {
+  const response = await fetch(`${API_URL}/analisis-energetico`);
+
+  if (!response.ok) {
+    throw new Error('Error al obtener el historial de análisis');
+  }
+
+  return await response.json();
+};

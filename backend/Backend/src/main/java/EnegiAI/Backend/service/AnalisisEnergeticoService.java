@@ -97,4 +97,12 @@ public class AnalisisEnergeticoService {
 
         return new AnalisisEntityDTO(entidad);
     }
+
+    /* GET /analisis-energetico - Listar historial */
+    public List<AnalisisEntityDTO> listarHistorial() {
+        return analisisEnergeticoRepository.findAll()
+                .stream()
+                .map(AnalisisEntityDTO::new)
+                .toList();
+    }
 }

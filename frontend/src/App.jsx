@@ -18,7 +18,9 @@ export default function App() {
 
   return (
     <MainLayout currentRoute={currentRoute} onNavigate={(route) => setCurrentRoute(route)}>
-      {currentRoute === '/' && <Home />}
+      {currentRoute === '/' && (
+        <Home onNavigateToNew={() => setCurrentRoute('/nuevo-analisis')} />
+      )}
       {currentRoute === '/nuevo-analisis' && <NuevoAnalisis />}
       {currentRoute === '/historial' && <Historial />}
       {currentRoute === '/comparacion' && <Comparacion />}

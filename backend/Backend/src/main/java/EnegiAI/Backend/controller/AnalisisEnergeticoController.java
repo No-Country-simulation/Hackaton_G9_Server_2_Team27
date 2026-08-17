@@ -85,4 +85,10 @@ public class AnalisisEnergeticoController {
         public String health() {
             return "Hola";
         }
+
+        @GetMapping("/analisis-energetico")
+        public ResponseEntity<List<AnalisisEntityDTO>> listarHistorial() {
+            var historial = analisisEnergeticoService.listarHistorial();
+            return ResponseEntity.ok(historial);
+        }
 }
