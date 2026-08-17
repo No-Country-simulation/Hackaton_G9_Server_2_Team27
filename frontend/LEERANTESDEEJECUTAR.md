@@ -35,13 +35,12 @@ npm (incluido automáticamente con Node.js)
 Backend de Spring Boot en ejecución (puerto 8080 por defecto)
 
 ## Dependencias Principales Incluidas
-Al ejecutar npm install se instalarán automáticamente las librerías necesarias del proyecto:
+Al ejecutar `npm install` se instalarán automáticamente las librerías necesarias del proyecto:
 
-react-router-dom (Manejo de rutas y navegación)
-
-lucide-react (Iconografía de la UI)
-
-tailwindcss + @tailwindcss/vite (Estilos visuales)
+* **react-router-dom**: Manejo de rutas y navegación.
+* **lucide-react**: Iconografía moderna de la interfaz de usuario.
+* **recharts**: Renderizado de gráficos interactivos para el dashboard y la comparativa de consumos.
+* **tailwindcss + @tailwindcss/vite**: Framework de estilos y utilidades CSS.
 
 ## Estructura del Proyecto
 

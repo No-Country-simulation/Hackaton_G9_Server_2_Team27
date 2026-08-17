@@ -48,11 +48,11 @@ export default function NuevoAnalisis() {
 
     // Mapeo exacto hacia tu DTO Spring Boot (@Valid ConsumoRequest)
     const payload = {
-      consumoKwh: Number(formData.consumoMensual),
-      usoHorarioPico: formData.usoHorarioPico === 'true' || formData.usoHorarioPico === true,
-      cantidadEquipos: Number(formData.cantidadEquipos),
-      tipoInmueble: formData.tipoInmueble,
-      horasAltoConsumo: Number(formData.horasAltoConsumo),
+      consumo_kwh: Number(formData.consumoMensual),
+      uso_horario_pico: formData.usoHorarioPico === 'true' || formData.usoHorarioPico === true,
+      cantidad_equipos: Number(formData.cantidadEquipos),
+      tipo_inmueble: formData.tipoInmueble,
+      horas_alto_consumo: Number(formData.horasAltoConsumo),
     };
 
     try {
@@ -67,38 +67,63 @@ export default function NuevoAnalisis() {
   };
 
   // Helper para personalizar según la categoría devuelta por Spring Boot
-const getCategoriaTheme = (catName = '') => {
-  const name = catName.toLowerCase();
+  const getCategoriaTheme = (catName = '') => {
+    const name = catName.toLowerCase();
 
-  if (name.includes('ineficiente')) {
+    if (name.includes('ineficiente')) {
+      return {
+        bg: '#fff8f0',
+        border: '#fee2e2',
+        text: '#dc2626',
+        icon: <Frown size={68} color="#dc2626" strokeWidth={1.5} />,
+        barColor: '#dc2626'
+      };
+    }
+
+    if (name.includes('eficiente')) {
+      return {
+        bg: '#f0fdf4',
+        border: '#bbf7d0',
+        text: '#16a34a',
+        icon: <Smile size={68} color="#16a34a" strokeWidth={1.5} />,
+        barColor: '#16a34a'
+      };
+    }
+
+    // Moderado
     return {
-      bg: '#fff8f0',
-      border: '#fee2e2',
-      text: '#dc2626',
-      icon: <Frown size={68} color="#dc2626" strokeWidth={1.5} />,
-      barColor: '#dc2626'
+      bg: '#fffae6',
+      border: '#fef08a',
+      text: '#d97706',
+      icon: <Meh size={68} color="#d97706" strokeWidth={1.5} />,
+      barColor: '#eab308'
     };
-  }
-
-  if (name.includes('eficiente')) {
-    return {
-      bg: '#f0fdf4',
-      border: '#bbf7d0',
-      text: '#16a34a',
-      icon: <Smile size={68} color="#16a34a" strokeWidth={1.5} />,
-      barColor: '#16a34a'
-    };
-  }
-
-  // Moderado
-  return {
-    bg: '#fffae6',
-    border: '#fef08a',
-    text: '#d97706',
-    icon: <Meh size={68} color="#d97706" strokeWidth={1.5} />,
-    barColor: '#eab308'
   };
-};
+
+  const calcularMetricasExtras = (consumoKwh, tipoInmueble, categoria = '', costoMensual = 0) => {
+    // 1. Promedio base según inmueble
+    const promedios = { Casa: 300, Departamento: 200, Comercial: 600 };
+    const basePromedio = promedios[tipoInmueble] || 250;
+    
+    const diffPct = Math.round(((consumoKwh - basePromedio) / basePromedio) * 100);
+    const esMayor = diffPct > 0;
+
+    // 2. Ahorro estimado según la categoría de ML
+    const cat = categoria.toLowerCase();
+    let pctAhorro = 0;
+    if (cat.includes('ineficiente')) pctAhorro = 0.25;
+    else if (cat.includes('moderado')) pctAhorro = 0.10;
+
+    const ahorroMonto = (costoMensual * pctAhorro).toFixed(2);
+
+    return {
+      diffTexto: `${esMayor ? '+' : ''}${diffPct}%`,
+      diffSubtexto: esMayor ? 'Sobre el promedio' : 'Bajo el promedio',
+      diffColor: esMayor ? '#dc2626' : '#16a34a',
+      ahorroTexto: pctAhorro > 0 ? `R$ ${ahorroMonto}` : 'R$ 0,00',
+      ahorroSubtexto: pctAhorro > 0 ? 'Potencial estimado' : 'Consumo óptimo',
+    };
+  };
 
   const catTheme = resultado ? getCategoriaTheme(resultado.categoria?.categoria) : null;
   const probabilidadPct = resultado ? Math.round((resultado.categoria?.probabilidad || 0) * 100) : 0;
@@ -109,7 +134,7 @@ const getCategoriaTheme = (catName = '') => {
         Nuevo análisis
       </h2>
 
-      {/* Grid Principal de 2 Columnas como en la foto */}
+      {/* Grid Principal de 2 Columnas */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: '1.5rem', alignItems: 'start' }}>
         
         {/* COLUMNA IZQUIERDA: Formulario */}
@@ -257,108 +282,129 @@ const getCategoriaTheme = (catName = '') => {
                 <Clock size={18} /> Resultados del análisis
               </h3>
 
-              {/* Card 1: Categoría y Barra de Probabilidad (Estilo Réplica) */}
-<div
-  style={{
-    backgroundColor: catTheme.bg,
-    border: `1px solid ${catTheme.border}`,
-    borderRadius: '1.25rem',
-    padding: '1.25rem 1.75rem',
-    display: 'grid',
-    gridTemplateColumns: '1fr auto 1.3fr',
-    gap: '1.5rem',
-    alignItems: 'center',
-  }}
->
-{/* Sección Izquierda: Bloque Texto + Ícono al lado */}
-<div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-  {/* Bloque de texto (Categoría + Valor) */}
-  <div style={{ display: 'flex', flexDirection: 'column' }}>
-    <span style={{ fontSize: '0.8rem', color: '#52525b', fontWeight: '500' }}>
-      Categoría
-    </span>
-    <h2 style={{ fontSize: '2.25rem', fontWeight: 'bold', color: catTheme.text, margin: 0, lineHeight: 1.1 }}>
-      {resultado.categoria?.categoria}
-    </h2>
-  </div>
+              {/* Card 1: Categoría y Barra de Probabilidad */}
+              <div
+                style={{
+                  backgroundColor: catTheme.bg,
+                  border: `1px solid ${catTheme.border}`,
+                  borderRadius: '1.25rem',
+                  padding: '1.25rem 1.75rem',
+                  display: 'grid',
+                  gridTemplateColumns: '1fr auto 1.3fr',
+                  gap: '1.5rem',
+                  alignItems: 'center',
+                }}
+              >
+                {/* Sección Izquierda: Texto + Ícono */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontSize: '0.8rem', color: '#52525b', fontWeight: '500' }}>
+                      Categoría
+                    </span>
+                    <h2 style={{ fontSize: '2.25rem', fontWeight: 'bold', color: catTheme.text, margin: 0, lineHeight: 1.1 }}>
+                      {resultado.categoria?.categoria}
+                    </h2>
+                  </div>
 
-  {/* Ícono más grande al lado */}
-  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-    {catTheme.icon}
-  </div>
-</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {catTheme.icon}
+                  </div>
+                </div>
 
-{/* Divisor Vertical Fino */}
-<div style={{ width: '1px', height: '80%', backgroundColor: '#e2e8f0' }} />
+                {/* Divisor Vertical */}
+                <div style={{ width: '1px', height: '80%', backgroundColor: '#e2e8f0' }} />
 
-  {/* Sección Derecha: Probabilidad y Barra */}
-  <div>
-    <span style={{ fontSize: '0.8rem', color: '#52525b', fontWeight: '500' }}>
-      {resultado.categoria?.categoria?.toLowerCase().includes('ineficiente')
-        ? 'Probabilidad de ineficiencia'
-        : `Probabilidad de ${resultado.categoria?.categoria?.toLowerCase()}`}
-    </span>
-    
-    <h3 style={{ fontSize: '1.75rem', fontWeight: 'bold', color: catTheme.text, margin: '0.2rem 0 0.5rem 0' }}>
-      {probabilidadPct}%
-    </h3>
+                {/* Sección Derecha: Probabilidad */}
+                <div>
+                  <span style={{ fontSize: '0.8rem', color: '#52525b', fontWeight: '500' }}>
+                    {resultado.categoria?.categoria?.toLowerCase().includes('ineficiente')
+                      ? 'Probabilidad de ineficiencia'
+                      : `Probabilidad de ${resultado.categoria?.categoria?.toLowerCase()}`}
+                  </span>
+                  
+                  <h3 style={{ fontSize: '1.75rem', fontWeight: 'bold', color: catTheme.text, margin: '0.2rem 0 0.5rem 0' }}>
+                    {probabilidadPct}%
+                  </h3>
 
-    {/* Barra de progreso con textura de rayas y bordes completamente redondeados */}
-    <div style={{ width: '100%', height: '12px', backgroundColor: '#e2e8f0', borderRadius: '9999px', overflow: 'hidden' }}>
-      <div
-        style={{
-          width: `${probabilidadPct}%`,
-          height: '100%',
-          backgroundColor: catTheme.barColor,
-          backgroundImage: `linear-gradient(
-            45deg,
-            rgba(255, 255, 255, 0.25) 25%,
-            transparent 25%,
-            transparent 50%,
-            rgba(255, 255, 255, 0.25) 50%,
-            rgba(255, 255, 255, 0.25) 75%,
-            transparent 75%,
-            transparent
-          )`,
-          backgroundSize: '1rem 1rem',
-          borderRadius: '9999px',
-          transition: 'width 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
-        }}
-      />
-    </div>
-  </div>
-</div>
+                  <div style={{ width: '100%', height: '12px', backgroundColor: '#e2e8f0', borderRadius: '9999px', overflow: 'hidden' }}>
+                    <div
+                      style={{
+                        width: `${probabilidadPct}%`,
+                        height: '100%',
+                        backgroundColor: catTheme.barColor,
+                        backgroundImage: `linear-gradient(
+                          45deg,
+                          rgba(255, 255, 255, 0.25) 25%,
+                          transparent 25%,
+                          transparent 50%,
+                          rgba(255, 255, 255, 0.25) 50%,
+                          rgba(255, 255, 255, 0.25) 75%,
+                          transparent 75%,
+                          transparent
+                        )`,
+                        backgroundSize: '1rem 1rem',
+                        borderRadius: '9999px',
+                        transition: 'width 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
 
-              {/* Card 2: Resumen del Consumo (Grid de 4 Tarjetas) */}
+              {/* Card 2: Resumen del Consumo Calculado Dinámicamente */}
               <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '1rem', padding: '1.25rem' }}>
                 <h4 style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#475569', marginBottom: '1rem' }}>Resumen del consumo</h4>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '0.75rem' }}>
-                  
-                  <div style={metricCardStyle}>
-                    <span style={{ fontSize: '0.7rem', color: '#64748b' }}>Consumo estimado</span>
-                    <strong style={{ fontSize: '1.1rem', color: '#0f172a', margin: '0.25rem 0' }}>{formData.consumoMensual || 420} kWh</strong>
-                    <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>Mensual</span>
-                  </div>
+                
+                {(() => {
+                  const extras = calcularMetricasExtras(
+                    Number(formData.consumoMensual),
+                    formData.tipoInmueble,
+                    resultado.categoria?.categoria,
+                    resultado.estimacionFinanciera?.costoEstimadoMensual
+                  );
 
-                  <div style={metricCardStyle}>
-                    <span style={{ fontSize: '0.7rem', color: '#64748b' }}>Costo estimado</span>
-                    <strong style={{ fontSize: '1.1rem', color: '#0f172a', margin: '0.25rem 0' }}>R$ {resultado.estimacionFinanciera?.costoEstimadoMensual}</strong>
-                    <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>Tarifa: R$ 0.75/kWh</span>
-                  </div>
+                  return (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '0.75rem' }}>
+                      
+                      {/* 1. Consumo */}
+                      <div style={metricCardStyle}>
+                        <span style={{ fontSize: '0.7rem', color: '#64748b' }}>Consumo estimado</span>
+                        <strong style={{ fontSize: '1.1rem', color: '#0f172a', margin: '0.25rem 0' }}>
+                          {formData.consumoMensual} kWh
+                        </strong>
+                        <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>Mensual</span>
+                      </div>
 
-                  <div style={metricCardStyle}>
-                    <span style={{ fontSize: '0.7rem', color: '#64748b' }}>Comparado promedio</span>
-                    <strong style={{ fontSize: '1.1rem', color: '#dc2626', margin: '0.25rem 0' }}>+28%</strong>
-                    <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>Sobre el promedio</span>
-                  </div>
+                      {/* 2. Costo */}
+                      <div style={metricCardStyle}>
+                        <span style={{ fontSize: '0.7rem', color: '#64748b' }}>Costo estimado</span>
+                        <strong style={{ fontSize: '1.1rem', color: '#0f172a', margin: '0.25rem 0' }}>
+                          R$ {resultado.estimacionFinanciera?.costoEstimadoMensual}
+                        </strong>
+                        <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>Tarifa: R$ 0.75/kWh</span>
+                      </div>
 
-                  <div style={metricCardStyle}>
-                    <span style={{ fontSize: '0.7rem', color: '#64748b' }}>Ahorro posible</span>
-                    <strong style={{ fontSize: '1.1rem', color: '#16a34a', margin: '0.25rem 0' }}>R$ 45.00</strong>
-                    <span style={{ fontSize: '0.65rem', color: '#0284c7', cursor: 'pointer', fontWeight: 'bold' }}>Ver simulación</span>
-                  </div>
+                      {/* 3. Comparado promedio (Calculado) */}
+                      <div style={metricCardStyle}>
+                        <span style={{ fontSize: '0.7rem', color: '#64748b' }}>Comparado promedio</span>
+                        <strong style={{ fontSize: '1.1rem', color: extras.diffColor, margin: '0.25rem 0' }}>
+                          {extras.diffTexto}
+                        </strong>
+                        <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>{extras.diffSubtexto}</span>
+                      </div>
 
-                </div>
+                      {/* 4. Ahorro posible (Calculado) */}
+                      <div style={metricCardStyle}>
+                        <span style={{ fontSize: '0.7rem', color: '#64748b' }}>Ahorro posible</span>
+                        <strong style={{ fontSize: '1.1rem', color: '#16a34a', margin: '0.25rem 0' }}>
+                          {extras.ahorroTexto}
+                        </strong>
+                        <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>{extras.ahorroSubtexto}</span>
+                      </div>
+
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Card 3: Recomendaciones Clave */}
@@ -392,7 +438,7 @@ const getCategoriaTheme = (catName = '') => {
 
             </div>
           ) : (
-            /* Placeholder mientras no hay resultado */
+            /* Placeholder */
             <div style={{ backgroundColor: '#ffffff', border: '2px dashed #cbd5e1', borderRadius: '1rem', padding: '3rem', textAlign: 'center', color: '#64748b', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
               <Zap size={48} color="#94a3b8" />
               <div>

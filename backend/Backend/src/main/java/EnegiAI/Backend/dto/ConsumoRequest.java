@@ -1,6 +1,5 @@
 package EnegiAI.Backend.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.*;
 
 /**
@@ -13,27 +12,21 @@ import jakarta.validation.constraints.*;
 public record ConsumoRequest(
         @NotNull(message = "El consumo en kWh es obligatorio")
         @Positive(message = "El consumo en kWh debe ser mayor a cero")
-//        @JsonProperty("consumoKwh")
         Double consumo_kwh,
 
         @NotNull(message = "El campo de uso horario pico es obligatorio")
-//        @JsonProperty("usoHorarioPico")
         Boolean uso_horario_pico,
 
         @NotNull(message = "La cantidad de equipos es obligatoria")
         @Positive(message = "La cantidad de equipos debe ser al menos 1")
-//        @JsonProperty("cantidadEquipos")
         Integer cantidad_equipos,
 
         @NotBlank(message = "El tipo de inmueble no puede estar vacío")
-//        @JsonProperty("tipoInmueble")
         String tipo_inmueble,
 
         @NotNull(message = "Las horas de alto consumo son obligatorias")
         @PositiveOrZero(message = "Las horas de alto consumo no pueden ser negativas")
         @Min(value = 0, message = "Las horas de alto consumo no pueden ser menores a 0")
         @Max(value = 24, message = "Las horas de alto consumo no pueden ser mayores a 24")
-//        @JsonProperty("horasAltoConsumo")
         Integer horas_alto_consumo
-) {
-}
+) {}
