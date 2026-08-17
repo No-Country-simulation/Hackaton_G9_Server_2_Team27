@@ -48,7 +48,6 @@ public class AnalisisEnergeticoController {
         @PostMapping("/analisis-energetico")
         public ResponseEntity<AnalisisResponse> realizarAnalisis(@RequestBody @Valid ConsumoRequest consumoRequestJson){
             var analisis = analisisEnergeticoService.procesarAnalisis(consumoRequestJson);
-            System.out.println("FUNCIONA!");
             return ResponseEntity.ok(analisis);
             //Retorna 200 OK no un 201 CREATED + BODY LOCATION, por ahora.
         }

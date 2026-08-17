@@ -15,16 +15,10 @@ public record ConsumoRequest(
         Double consumo_kwh,
 
         @NotNull(message = "El campo de uso horario pico es obligatorio")
-        Double consumo_kwh,
-
-        @NotNull(message = "El campo de uso horario pico es obligatorio")
         Boolean uso_horario_pico,
 
         @NotNull(message = "La cantidad de equipos es obligatoria")
         @Positive(message = "La cantidad de equipos debe ser al menos 1")
-        Integer cantidad_equipos,
-
-        @NotBlank(message = "El tipo de inmueble no puede estar vacío")
         Integer cantidad_equipos,
 
         @NotBlank(message = "El tipo de inmueble no puede estar vacío")
@@ -35,5 +29,4 @@ public record ConsumoRequest(
         @Min(value = 0, message = "Las horas de alto consumo no pueden ser menores a 0")
         @Max(value = 24, message = "Las horas de alto consumo no pueden ser mayores a 24")
         Integer horas_alto_consumo
-) {
-}
+) {}
