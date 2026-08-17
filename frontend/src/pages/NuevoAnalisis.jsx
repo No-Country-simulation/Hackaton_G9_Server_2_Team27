@@ -48,11 +48,11 @@ export default function NuevoAnalisis() {
 
     // Mapeo exacto hacia tu DTO Spring Boot (@Valid ConsumoRequest)
     const payload = {
-      consumoKwh: Number(formData.consumoMensual),
-      usoHorarioPico: formData.usoHorarioPico === 'true' || formData.usoHorarioPico === true,
-      cantidadEquipos: Number(formData.cantidadEquipos),
-      tipoInmueble: formData.tipoInmueble,
-      horasAltoConsumo: Number(formData.horasAltoConsumo),
+      consumo_kwh: Number(formData.consumoMensual),
+      uso_horario_pico: formData.usoHorarioPico === 'true' || formData.usoHorarioPico === true,
+      cantidad_equipos: Number(formData.cantidadEquipos),
+      tipo_inmueble: formData.tipoInmueble,
+      horas_alto_consumo: Number(formData.horasAltoConsumo),
     };
 
     try {
