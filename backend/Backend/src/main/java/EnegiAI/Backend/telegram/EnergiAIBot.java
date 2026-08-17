@@ -9,12 +9,10 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.util.concurrent.ThreadLocalRandom;
-
 /**
- * Bot de Telegram encargado de vincular el chat del usuario con el
- * formulario web (mediante un código temporal) y de entregarle los
- * resultados de sus análisis energéticos directamente en el chat.
+ * Bot de Telegram encargado de vincular automáticamente el navegador del
+ * usuario (identificado por un sessionId generado en el frontend) con su
+ * chat de Telegram, mediante un enlace directo (deep link) con /start.
  */
 @Component
 public class EnergiAIBot extends TelegramLongPollingBot {
@@ -41,23 +39,33 @@ public class EnergiAIBot extends TelegramLongPollingBot {
             String chatId = update.getMessage().getChatId().toString();
             String textoRecibido = update.getMessage().getText().trim();
 
-            if (textoRecibido.equalsIgnoreCase("/vincular")) {
-                responderVinculacion(chatId);
-            } else if (textoRecibido.equalsIgnoreCase("/start")) {
-                enviarMensaje(chatId, "¡Hola! Soy el bot de EnergiAI. Escribí /vincular para conectar tu cuenta y recibir tus resultados aquí.");
+            if (textoRecibido.startsWith("/start")) {
+                String sessionId = extraerSessionId(textoRecibido);
+
+                if (sessionId != null) {
+                    vincularAutomaticamente(chatId, sessionId);
+                } else {
+                    enviarMensaje(chatId, "¡Hola! Para vincular tu cuenta, entrá a la web de EnergiAI y tocá el botón de Telegram.");
+                }
             } else {
-                enviarMensaje(chatId, "No entendí ese mensaje. Escribí /vincular para conectar tu cuenta con la web de EnergiAI.");
+                enviarMensaje(chatId, "No entendí ese mensaje. Para vincular tu cuenta, entrá a la web de EnergiAI y tocá el botón de Telegram.");
             }
         }
     }
 
-    private void responderVinculacion(String chatId) {
-        String codigo = String.valueOf(ThreadLocalRandom.current().nextInt(1000, 9999));
-        vinculoRepository.save(new TelegramVinculo(codigo, chatId));
+    private String extraerSessionId(String textoRecibido) {
+        String[] partes = textoRecibido.split(" ", 2);
+        return partes.length == 2 ? partes[1].trim() : null;
+    }
 
-        String texto = "Tu código de vinculación es: *" + codigo + "*\n\n" +
-                "Copialo y pegalo en el formulario de la web de EnergiAI para recibir tus resultados aquí.";
-        enviarMensaje(chatId, texto);
+    private void vincularAutomaticamente(String chatId, String sessionId) {
+        boolean yaExistia = vinculoRepository.findByCodigo(sessionId).isPresent();
+
+        if (!yaExistia) {
+            vinculoRepository.save(new TelegramVinculo(sessionId, chatId));
+        }
+
+        enviarMensaje(chatId, "✅ ¡Tu cuenta quedó vinculada! A partir de ahora, cada análisis que hagas en la web de EnergiAI te va a llegar acá automáticamente.");
     }
 
     private void enviarMensaje(String chatId, String texto) {
