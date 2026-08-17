@@ -1,6 +1,5 @@
 package EnegiAI.Backend.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.*;
 
 /**
@@ -16,10 +15,16 @@ public record ConsumoRequest(
         Double consumo_kwh,
 
         @NotNull(message = "El campo de uso horario pico es obligatorio")
+        Double consumo_kwh,
+
+        @NotNull(message = "El campo de uso horario pico es obligatorio")
         Boolean uso_horario_pico,
 
         @NotNull(message = "La cantidad de equipos es obligatoria")
         @Positive(message = "La cantidad de equipos debe ser al menos 1")
+        Integer cantidad_equipos,
+
+        @NotBlank(message = "El tipo de inmueble no puede estar vacío")
         Integer cantidad_equipos,
 
         @NotBlank(message = "El tipo de inmueble no puede estar vacío")

@@ -3,7 +3,10 @@ package EnegiAI.Backend.controller;
 import EnegiAI.Backend.dto.AnalisisEntityDTO;
 import EnegiAI.Backend.dto.AnalisisResponse;
 import EnegiAI.Backend.dto.ConsumoRequest;
+import EnegiAI.Backend.dto.PanelesSolaresRequest;
+import EnegiAI.Backend.dto.PanelesSolaresResponse;
 import EnegiAI.Backend.service.AnalisisEnergeticoService;
+import EnegiAI.Backend.service.PanelSolarService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,6 +31,9 @@ public class AnalisisEnergeticoController {
 
     @Autowired
     private AnalisisEnergeticoService analisisEnergeticoService;
+
+    @Autowired
+    private PanelSolarService panelSolarService;
     /**
      * Recibe los datos de consumo enviados por el cliente e inicia el proceso
      * de análisis energético.
@@ -55,6 +61,21 @@ public class AnalisisEnergeticoController {
         }
 
         /**
+     * Calcula la cantidad de paneles solares necesarios para cubrir un
+     * consumo eléctrico determinado, pensado para uso industrial o de
+     * quienes evalúan independizarse de la electricidad convencional.
+     *
+     * @param panelesRequest Consumo mensual y horas de mayor índice solar.
+     * @return Cantidad de paneles necesarios, generación mensual estimada,
+     *         porcentaje de cobertura y ahorro económico estimado.
+     */
+        @PostMapping("/analisis-energetico/paneles-solares")
+        public ResponseEntity<PanelesSolaresResponse> calcularPanelesSolares(@RequestBody @Valid PanelesSolaresRequest panelesRequest){
+            var resultado = panelSolarService.calcular(panelesRequest);
+            return ResponseEntity.ok(resultado);
+        }
+
+        /**
      * Expone un endpoint de verificación para comprobar que la aplicación
      * se encuentra disponible y respondiendo correctamente.
      *
@@ -63,5 +84,11 @@ public class AnalisisEnergeticoController {
         @GetMapping("/health")
         public String health() {
             return "Hola";
+        }
+
+        @GetMapping("/analisis-energetico")
+        public ResponseEntity<List<AnalisisEntityDTO>> listarHistorial() {
+            var historial = analisisEnergeticoService.listarHistorial();
+            return ResponseEntity.ok(historial);
         }
 }
