@@ -4,7 +4,8 @@ import {
   Clock, 
   Cpu, 
   Home, 
-  Info, 
+  Info,
+  Users,
   RotateCcw, 
   Send, 
   Frown, 
@@ -22,7 +23,9 @@ export default function NuevoAnalisis() {
     usoHorarioPico: '',
     cantidadEquipos: '',
     tipoInmueble: '',
-    horasAltoConsumo: ''
+    horasAltoConsumo: '',
+    metrosCuadrados: '',
+    cantidadPersonas: ''
   };
 
   const [formData, setFormData] = useState(initialState);
@@ -53,6 +56,8 @@ export default function NuevoAnalisis() {
       cantidad_equipos: Number(formData.cantidadEquipos),
       tipo_inmueble: formData.tipoInmueble,
       horas_alto_consumo: Number(formData.horasAltoConsumo),
+      metros_cuadrados: Number(formData.metrosCuadrados),
+      cantidad_personas: Number(formData.cantidadPersonas),
     };
 
     try {
@@ -224,26 +229,65 @@ export default function NuevoAnalisis() {
                     <option value="Casa">Casa</option>
                     <option value="Departamento">Departamento</option>
                     <option value="Comercial">Comercial</option>
+                    <option value="Pequeña Empresa">Pequeña Empresa</option>
                   </select>
                 </div>
               </div>
             </div>
 
             {/* Fila 3 */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div>
+                <label style={labelStyle}>Horas de alto consumo por día *</label>
+                <div style={inputContainerStyle}>
+                  <Clock size={16} color="#64748b" />
+                  <input
+                    type="number"
+                    name="horasAltoConsumo"
+                    placeholder="8"
+                    value={formData.horasAltoConsumo}
+                    onChange={handleChange}
+                    required
+                    style={inputStyle}
+                  />
+                  <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>horas</span>
+                </div>
+              </div>
+
+              <div>
+                <label style={labelStyle}>Metros cuadrados *</label>
+                <div style={inputContainerStyle}>
+                  <Home size={16} color="#64748b" />
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="metrosCuadrados"
+                    placeholder="100.5"
+                    value={formData.metrosCuadrados}
+                    onChange={handleChange}
+                    required
+                    style={inputStyle}
+                  />
+                  <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>m²</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Fila 4 */}
             <div>
-              <label style={labelStyle}>Horas de alto consumo por día *</label>
+              <label style={labelStyle}>Cantidad de personas *</label>
               <div style={inputContainerStyle}>
-                <Clock size={16} color="#64748b" />
+                <Users size={16} color="#64748b" />
                 <input
                   type="number"
-                  name="horasAltoConsumo"
-                  placeholder="8"
-                  value={formData.horasAltoConsumo}
+                  name="cantidadPersonas"
+                  placeholder="4"
+                  value={formData.cantidadPersonas}
                   onChange={handleChange}
                   required
                   style={inputStyle}
                 />
-                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>horas</span>
+                <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>pers.</span>
               </div>
             </div>
 

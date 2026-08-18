@@ -19,7 +19,7 @@ class DataScienceClientTest {
 
         DataScienceClient client = new DataScienceClient(restTemplate, urlInvalida);
 
-        ConsumoRequest request = new ConsumoRequest(420.0, true, 10, "Casa", 8);
+        ConsumoRequest request = new ConsumoRequest(420.0, true, 10, "Casa", 8, 100.0, 4);
 
         MLPredictionResponse resultado = client.obtenerPrediccion(request);
 

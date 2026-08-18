@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  ml-service:
+    build: 
+      context: ./ml-service
+      dockerfile: Dockerfile
+    platform: linux/amd64
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./ml-service/.env
+    networks:
+      - energia_network
+
+  backend:
+    build: 
+      context: ./backend/Backend
+      dockerfile: Dockerfile
+    platform: linux/amd64
+    ports:
+      - "8080:8080"
+    environment:
+      - DS_API_URL=http://ml-service:8000/analisis-energetico
+    depends_on:
+      - ml-service
+    networks:
+      - energia_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    platform: linux/amd64
+    ports:
+      - "3000:80"
+    networks:
+      - energia_network
+
+networks:
+  energia_network:
+    driver: bridge

@@ -9,6 +9,9 @@ import os
 
 app = FastAPI(title="EnergiAI ML Ensamble (4 Modelos)", version="1.0.0")
 
+from download_models import descargar_desde_oci
+descargar_desde_oci()
+
 # ==========================================
 # 1. ESQUEMA DE ENTRADA (contrato con Java)
 # ==========================================
@@ -56,11 +59,16 @@ def construir_dataframes(data: EnergyRequest):
         'horas_alto_consumo': data.horas_alto_consumo
     }
 
+    tipo_inmueble_inferencia = data.tipo_inmueble
+    if tipo_inmueble_inferencia.lower() in ["pequeña empresa", "pequeñas empresas"]:
+        # Fallback seguro para evitar error de Unknown Category en Scikit-Learn
+        tipo_inmueble_inferencia = "Comercial" # O el valor genérico soportado
+
     # XGBoost, Regresion Logistica y KNN esperan "tipo_vivienda"
-    df_vivienda = pd.DataFrame([{**datos_base, 'tipo_vivienda': data.tipo_inmueble}])
+    df_vivienda = pd.DataFrame([{**datos_base, 'tipo_vivienda': tipo_inmueble_inferencia}])
 
     # Random Forest esperan "tipo_inmueble" (nombre distinto, mismo dato)
-    df_inmueble = pd.DataFrame([{**datos_base, 'tipo_inmueble': data.tipo_inmueble}])
+    df_inmueble = pd.DataFrame([{**datos_base, 'tipo_inmueble': tipo_inmueble_inferencia}])
 
     return df_vivienda, df_inmueble
 

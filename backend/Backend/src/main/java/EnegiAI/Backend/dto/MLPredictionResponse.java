@@ -1,16 +1,15 @@
 package EnegiAI.Backend.dto;
 
-import EnegiAI.Backend.model.Categoria;
+import java.util.Map;
 
-/**
- * DTO que representa la respuesta cruda enviada por el servicio de
- * Machine Learning (FastAPI) tras clasificar el perfil energético.
- *
- * Mapea directamente el JSON {"categoria": "...", "probabilidad": ...}
- * devuelto por el modelo de Data Science.
- */
 public record MLPredictionResponse(
         String categoria,
-        Double probabilidad
-) {
-}
+        Double probabilidad,
+        DetallesPrediccion detalles
+) {}
+
+record DetallesPrediccion(
+        Map<String, String> votos_detallados,
+        String metodo_decision,
+        Map<String, Double> latencias_ms
+) {}
