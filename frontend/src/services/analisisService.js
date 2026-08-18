@@ -62,3 +62,40 @@ export const obtenerHistorialAnalisis = async () => {
 
   return await response.json();
 };
+/**
+ * Consulta si el sessionId del navegador ya fue vinculado a un chat
+ * de Telegram.
+ * @param {string} sessionId Identificador generado por el navegador.
+ * @returns {Promise<boolean>} true si ya está vinculado.
+ */
+export const consultarVinculacionTelegram = async (sessionId) => {
+  try {
+    const response = await fetch(`${API_URL}/telegram/vinculado/${sessionId}`);
+    if (!response.ok) return false;
+    const data = await response.json();
+    return data.vinculado === true;
+  } catch (error) {
+    console.warn('No se pudo consultar la vinculación de Telegram');
+    return false;
+  }
+};
+
+/**
+ * Envía por Telegram el resultado de un análisis ya calculado, al chat
+ * vinculado con el sessionId del navegador.
+ * @param {string} sessionId Identificador del navegador ya vinculado.
+ * @param {Object} analisis Resultado del análisis (AnalisisResponse).
+ */
+export const notificarResultadoPorTelegram = async (sessionId, analisis) => {
+  try {
+    await fetch(`${API_URL}/telegram/notificar/${sessionId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(analisis),
+    });
+  } catch (error) {
+    console.warn('No se pudo enviar el resultado por Telegram');
+  }
+};

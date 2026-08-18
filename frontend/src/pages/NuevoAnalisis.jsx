@@ -14,7 +14,9 @@ import {
   DollarSign, 
   AlertCircle 
 } from 'lucide-react';
-import { realizarAnalisisEnergetico } from '@/services/analisisService';
+import { realizarAnalisisEnergetico, notificarResultadoPorTelegram } from '@/services/analisisService';
+import { getOrCreateSessionId, isTelegramLinked } from '@/utils/telegramSession';
+import TelegramLinkButton from '@/components/telegram/TelegramLinkButton';
 
 export default function NuevoAnalisis() {
   const initialState = {
@@ -58,6 +60,10 @@ export default function NuevoAnalisis() {
     try {
       const responseDTO = await realizarAnalisisEnergetico(payload);
       setResultado(responseDTO);
+
+      if (isTelegramLinked()) {
+        notificarResultadoPorTelegram(getOrCreateSessionId(), responseDTO);
+      }
     } catch (err) {
       console.error(err);
       setErrorMsg('No se pudo procesar el análisis. Verifica que el backend Java esté en ejecución.');
@@ -281,6 +287,8 @@ export default function NuevoAnalisis() {
               <h3 style={{ fontSize: '1rem', fontWeight: 'bold', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Clock size={18} /> Resultados del análisis
               </h3>
+
+              <TelegramLinkButton />
 
               {/* Card 1: Categoría y Barra de Probabilidad */}
               <div
