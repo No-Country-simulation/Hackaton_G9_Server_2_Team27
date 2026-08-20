@@ -8,6 +8,7 @@ import {
   Settings, 
   LogOut 
 } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const MODULOS = [
   { id: 1, nombre: 'Dashboard', ruta: '/', icon: Zap },
@@ -19,7 +20,10 @@ const MODULOS = [
   { id: 7, nombre: 'Configuración', ruta: '/configuracion', icon: Settings },
 ];
 
-export default function SideBar({ isOpen = true, activeRoute = '/nuevo-analisis', onNavigate }) {
+export default function SideBar({ isOpen = true }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+
   if (!isOpen) return null;
 
   return (
@@ -46,13 +50,13 @@ export default function SideBar({ isOpen = true, activeRoute = '/nuevo-analisis'
       <nav style={{ flex: 1, padding: '0 1rem' }}>
         <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
           {MODULOS.map((item) => {
-            const isActive = activeRoute === item.ruta;
+            const isActive = location.pathname === item.ruta;
             const IconComponent = item.icon;
 
             return (
               <li key={item.id}>
                 <button
-                  onClick={() => onNavigate && onNavigate(item.ruta)}
+                  onClick={() => navigate(item.ruta)}
                   style={{
                     width: '100%',
                     border: 'none',
@@ -80,7 +84,13 @@ export default function SideBar({ isOpen = true, activeRoute = '/nuevo-analisis'
 
       {/* Logout Option */}
       <div style={{ padding: '1rem', borderTop: '1px solid #f1f5f9' }}>
-        <button style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', color: '#64748b', fontSize: '0.9rem' }}>
+        <button 
+          onClick={() => {
+            localStorage.removeItem('token');
+            window.location.href = '/';
+          }}
+          style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', color: '#64748b', fontSize: '0.9rem' }}
+        >
           <LogOut size={18} color="#64748b" />
           <span>Cerrar sesión</span>
         </button>

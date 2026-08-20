@@ -16,6 +16,7 @@ import {
   AlertCircle 
 } from 'lucide-react';
 import { realizarAnalisisEnergetico } from '@/services/analisisService';
+import { notificarTelegram } from '@/services/telegramService';
 
 export default function NuevoAnalisis() {
   const initialState = {
@@ -63,6 +64,17 @@ export default function NuevoAnalisis() {
     try {
       const responseDTO = await realizarAnalisisEnergetico(payload);
       setResultado(responseDTO);
+
+      // Notificar por Telegram si el usuario está vinculado
+      const isLinked = localStorage.getItem('telegramLinked') === 'true';
+      const sessionId = localStorage.getItem('telegramSessionId');
+      
+      if (isLinked && sessionId) {
+        // Enviar notificación en background sin bloquear la UI
+        notificarTelegram(sessionId, responseDTO).catch(err => 
+          console.error('Error al notificar por Telegram:', err)
+        );
+      }
     } catch (err) {
       console.error(err);
       setErrorMsg('No se pudo procesar el análisis. Verifica que el backend Java esté en ejecución.');
@@ -453,12 +465,29 @@ export default function NuevoAnalisis() {
 
               {/* Card 3: Recomendaciones Clave */}
               <div style={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '1rem', padding: '1.25rem' }}>
-                <h4 style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#475569', marginBottom: '0.75rem' }}>Recomendaciones clave</h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <h4 style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#475569', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Zap size={16} color="#eab308" /> Recomendaciones clave
+                </h4>
+                <div style={{ display: 'grid', gap: '0.85rem' }}>
                   {resultado.recomendaciones?.recomendaciones?.map((rec, idx) => (
-                    <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', fontSize: '0.8rem', color: '#334155' }}>
-                      <CheckCircle2 size={16} color="#16a34a" style={{ flexShrink: 0, marginTop: '2px' }} />
-                      <span>{rec}</span>
+                    <div 
+                      key={idx} 
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'flex-start', 
+                        gap: '0.85rem', 
+                        fontSize: '0.825rem', 
+                        color: '#334155',
+                        backgroundColor: '#f8fafc',
+                        padding: '0.85rem',
+                        borderRadius: '0.75rem',
+                        border: '1px solid #f1f5f9'
+                      }}
+                    >
+                      <div style={{ backgroundColor: '#ecfdf5', padding: '0.35rem', borderRadius: '0.4rem', flexShrink: 0, marginTop: '2px' }}>
+                        <CheckCircle2 size={16} color="#16a34a" />
+                      </div>
+                      <span style={{ lineHeight: '1.45' }}>{rec}</span>
                     </div>
                   ))}
                 </div>

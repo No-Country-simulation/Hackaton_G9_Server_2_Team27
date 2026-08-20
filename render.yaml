@@ -1,0 +1,25 @@
+services:
+  # Servicio de Python (FastAPI / Machine Learning)
+  - type: web
+    name: energia-ml-service
+    env: docker
+    dockerfilePath: ML_service/Dockerfile
+    dockerContext: ML_service
+    envVars:
+      - key: PORT
+        value: 8000
+
+  # Servicio de Backend (Java Spring Boot)
+  - type: web
+    name: energia-backend
+    env: docker
+    dockerfilePath: backend/Dockerfile
+    dockerContext: backend
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: DS_API_URL
+        value: https://energia-ml-service.onrender.com/analisis-energetico
+      - key: TELEGRAM_BOT_TOKEN
+        # REEMPLAZA ESTO EN EL PANEL DE RENDER O AQUÍ CON TU NUEVO TOKEN SI USAS OTRO BOT
+        value: "8946772205:AAFlYWhxSGs-AuJFF_qFFWMDM_Hxufte8H0"

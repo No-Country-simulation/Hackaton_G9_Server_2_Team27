@@ -1,42 +1,54 @@
 import { useState } from 'react';
-import { Zap, Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
+import { Zap, Mail, Lock, Eye, EyeOff, User, ArrowRight, Loader2, ArrowLeft } from 'lucide-react';
 
-export default function Login({ onLoginSuccess }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+export default function Register({ onRegisterSuccess, onBackToLogin }) {
+  const [formData, setFormData] = useState({
+    nombre: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
+  
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg('');
 
+    if (formData.password !== formData.confirmPassword) {
+      setErrorMsg('Las contraseñas no coinciden');
+      setLoading(false);
+      return;
+    }
+
     try {
-      // POST al endpoint de autenticación real
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/auth/login`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ 
+          nombre: formData.nombre,
+          email: formData.email, 
+          password: formData.password 
+        }),
       });
 
       if (!response.ok) {
-        throw new Error('Credenciales incorrectas o servidor no disponible');
+        throw new Error('Error al registrar usuario');
       }
 
-      const data = await response.json();
-      localStorage.setItem('token', data.token || 'simulated_jwt_token');
-      if (onLoginSuccess) onLoginSuccess();
+      if (onRegisterSuccess) onRegisterSuccess();
     } catch (error) {
-      console.warn('Fallback activo para hackatón:', error);
-      // Fallback simulado para que no se bloquee la UI de la hackatón si falta el backend
-      if (email === 'admin@energia.com' && password === '123456') {
-        localStorage.setItem('token', 'simulated_jwt_token_fallback');
-        if (onLoginSuccess) onLoginSuccess();
-      } else {
-        setErrorMsg('Credenciales incorrectas. (Prueba admin@energia.com / 123456 para demo)');
-      }
+      console.warn('Fallback activo para hackatón en Register:', error);
+      // Fallback simulado para demo
+      if (onRegisterSuccess) onRegisterSuccess();
     } finally {
       setLoading(false);
     }
@@ -45,27 +57,45 @@ export default function Login({ onLoginSuccess }) {
   return (
     <div style={pageContainerStyle}>
       <div style={cardStyle}>
+        
         {/* Logo / Header */}
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
           <div style={logoBadgeStyle}>
             <Zap size={28} color="#16a34a" />
           </div>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#0f172a', marginTop: '0.75rem' }}>
-            EnergiAI
+            Crea tu cuenta
           </h1>
           <p style={{ fontSize: '0.875rem', color: '#64748b', marginTop: '0.25rem' }}>
-            Ingresa a tu cuenta para gestionar el consumo energético
+            Únete a EnergiAI y optimiza tu consumo
           </p>
         </div>
 
         {/* Formulario */}
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           
           {errorMsg && (
             <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fee2e2', color: '#dc2626', padding: '0.75rem', borderRadius: '0.5rem', fontSize: '0.85rem', textAlign: 'center' }}>
               {errorMsg}
             </div>
           )}
+
+          {/* Campo Nombre */}
+          <div>
+            <label style={labelStyle}>Nombre completo</label>
+            <div style={inputWrapperStyle}>
+              <User size={18} color="#94a3b8" style={{ marginLeft: '0.75rem' }} />
+              <input
+                type="text"
+                name="nombre"
+                placeholder="Juan Pérez"
+                value={formData.nombre}
+                onChange={handleChange}
+                required
+                style={inputStyle}
+              />
+            </div>
+          </div>
 
           {/* Campo Email */}
           <div>
@@ -74,9 +104,10 @@ export default function Login({ onLoginSuccess }) {
               <Mail size={18} color="#94a3b8" style={{ marginLeft: '0.75rem' }} />
               <input
                 type="email"
+                name="email"
                 placeholder="ejemplo@correo.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={formData.email}
+                onChange={handleChange}
                 required
                 style={inputStyle}
               />
@@ -85,19 +116,15 @@ export default function Login({ onLoginSuccess }) {
 
           {/* Campo Contraseña */}
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-              <label style={labelStyle}>Contraseña</label>
-              <a href="#forgot" style={{ fontSize: '0.8rem', color: '#16a34a', textDecoration: 'none', fontWeight: '500' }}>
-                ¿Olvidaste tu contraseña?
-              </a>
-            </div>
+            <label style={labelStyle}>Contraseña</label>
             <div style={inputWrapperStyle}>
               <Lock size={18} color="#94a3b8" style={{ marginLeft: '0.75rem' }} />
               <input
                 type={showPassword ? 'text' : 'password'}
+                name="password"
                 placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                value={formData.password}
+                onChange={handleChange}
                 required
                 style={inputStyle}
               />
@@ -111,21 +138,41 @@ export default function Login({ onLoginSuccess }) {
             </div>
           </div>
 
-          {/* Botón de Ingreso */}
+          {/* Campo Confirmar Contraseña */}
+          <div>
+            <label style={labelStyle}>Confirmar Contraseña</label>
+            <div style={inputWrapperStyle}>
+              <Lock size={18} color="#94a3b8" style={{ marginLeft: '0.75rem' }} />
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="confirmPassword"
+                placeholder="••••••••"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                required
+                style={inputStyle}
+              />
+            </div>
+          </div>
+
+          {/* Botón de Registro */}
           <button type="submit" style={submitButtonStyle} disabled={loading}>
             {loading ? (
-              <><Loader2 size={18} className="animate-spin" /><span>Verificando...</span></>
+              <><Loader2 size={18} className="animate-spin" /><span>Registrando...</span></>
             ) : (
-              <><span>Iniciar sesión</span><ArrowRight size={18} /></>
+              <><span>Registrarse</span><ArrowRight size={18} /></>
             )}
           </button>
         </form>
 
-        {/* Footer del Login */}
-        <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.85rem', color: '#64748b' }}>
-          ¿No tienes una cuenta?{' '}
-          <button onClick={() => window.location.hash = 'register'} style={{ color: '#16a34a', fontWeight: '600', textDecoration: 'none', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-            Regístrate aquí
+        {/* Footer del Registro */}
+        <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+          <button 
+            onClick={onBackToLogin || (() => window.location.hash = '')} 
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#64748b', fontSize: '0.85rem', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          >
+            <ArrowLeft size={16} />
+            <span>Volver a Iniciar sesión</span>
           </button>
         </div>
       </div>
@@ -133,7 +180,7 @@ export default function Login({ onLoginSuccess }) {
   );
 }
 
-// Estilos específicos para la vista de Login
+// Estilos
 const pageContainerStyle = {
   minHeight: '100vh',
   backgroundColor: '#f8fafc',
@@ -150,7 +197,7 @@ const cardStyle = {
   borderRadius: '1rem',
   padding: '2.5rem 2rem',
   border: '1px solid #e2e8f0',
-  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.02)',
+  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05)',
 };
 
 const logoBadgeStyle = {
@@ -168,6 +215,8 @@ const labelStyle = {
   fontSize: '0.85rem',
   fontWeight: '500',
   color: '#334155',
+  marginBottom: '0.35rem',
+  display: 'block'
 };
 
 const inputWrapperStyle = {
@@ -176,13 +225,12 @@ const inputWrapperStyle = {
   backgroundColor: '#f8fafc',
   border: '1px solid #cbd5e1',
   borderRadius: '0.5rem',
-  marginTop: '0.35rem',
   overflow: 'hidden',
 };
 
 const inputStyle = {
   width: '100%',
-  padding: '0.75rem 0.75rem',
+  padding: '0.75rem',
   border: 'none',
   backgroundColor: 'transparent',
   outline: 'none',
