@@ -41,14 +41,13 @@ export default function Register({ onRegisterSuccess, onBackToLogin }) {
       });
 
       if (!response.ok) {
-        throw new Error('Error al registrar usuario');
+        throw new Error(`Error del servidor (${response.status}) al registrar usuario`);
       }
 
       if (onRegisterSuccess) onRegisterSuccess();
     } catch (error) {
-      console.warn('Fallback activo para hackatón en Register:', error);
-      // Fallback simulado para demo
-      if (onRegisterSuccess) onRegisterSuccess();
+      console.error('Error real capturado:', error);
+      setErrorMsg(error.message || 'No se pudo conectar con el servidor.');
     } finally {
       setLoading(false);
     }

@@ -22,21 +22,15 @@ export default function Login({ onLoginSuccess }) {
       });
 
       if (!response.ok) {
-        throw new Error('Credenciales incorrectas o servidor no disponible');
+        throw new Error(`Credenciales incorrectas o servidor fallando (${response.status})`);
       }
 
       const data = await response.json();
       localStorage.setItem('token', data.token || 'simulated_jwt_token');
       if (onLoginSuccess) onLoginSuccess();
     } catch (error) {
-      console.warn('Fallback activo para hackatón:', error);
-      // Fallback simulado para que no se bloquee la UI de la hackatón si falta el backend
-      if (email === 'admin@energia.com' && password === '123456') {
-        localStorage.setItem('token', 'simulated_jwt_token_fallback');
-        if (onLoginSuccess) onLoginSuccess();
-      } else {
-        setErrorMsg('Credenciales incorrectas. (Prueba admin@energia.com / 123456 para demo)');
-      }
+      console.error('Error real capturado:', error);
+      setErrorMsg(error.message || 'Error de conexión. Verifica la URL de VITE_API_URL.');
     } finally {
       setLoading(false);
     }
