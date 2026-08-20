@@ -14,8 +14,8 @@ export default function Login({ onLoginSuccess }) {
     setErrorMsg('');
 
     try {
-      // POST al endpoint de autenticación real
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/auth/login`, {
+      const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8080').replace(/\/+$/, '');
+      const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
