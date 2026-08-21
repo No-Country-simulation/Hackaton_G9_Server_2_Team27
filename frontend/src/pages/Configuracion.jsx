@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { User, Mail, Lock, CheckCircle2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { User, Mail, Lock, CheckCircle2, MessageCircle, Link, Unlink } from 'lucide-react';
+import { consultarVinculacionTelegram } from '@/services/telegramService';
 
 export default function Configuracion() {
   const [success, setSuccess] = useState(false);
@@ -8,6 +9,38 @@ export default function Configuracion() {
     e.preventDefault();
     setSuccess(true);
     setTimeout(() => setSuccess(false), 3000);
+  };
+
+  const [telegramLinked, setTelegramLinked] = useState(localStorage.getItem('telegramLinked') === 'true');
+  const [telegramLinking, setTelegramLinking] = useState(false);
+
+  const handleTelegramLink = async () => {
+    const newSessionId = Math.random().toString(36).substring(2, 15);
+    localStorage.setItem('telegramSessionId', newSessionId);
+    setTelegramLinking(true);
+    
+    window.open(`https://t.me/EnergiAI_27_bot?start=${newSessionId}`, '_blank');
+    
+    const interval = setInterval(async () => {
+      const isLinked = await consultarVinculacionTelegram(newSessionId);
+      if (isLinked) {
+        clearInterval(interval);
+        localStorage.setItem('telegramLinked', 'true');
+        setTelegramLinked(true);
+        setTelegramLinking(false);
+      }
+    }, 3000);
+    
+    setTimeout(() => {
+      clearInterval(interval);
+      setTelegramLinking(false);
+    }, 120000);
+  };
+
+  const handleTelegramUnlink = () => {
+    localStorage.removeItem('telegramLinked');
+    localStorage.removeItem('telegramSessionId');
+    setTelegramLinked(false);
   };
 
   return (
@@ -76,6 +109,36 @@ export default function Configuracion() {
               )}
             </div>
           </form>
+        </div>
+
+        {/* Telegram */}
+        <div style={cardStyle}>
+          <h3 style={cardTitleStyle}>Notificaciones por Telegram</h3>
+          <p style={cardSubtitleStyle}>Vincula tu cuenta para recibir alertas de análisis directamente en Telegram.</p>
+          
+          <div style={{ marginTop: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            {telegramLinked ? (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#16a34a', fontWeight: 'bold' }}>
+                  <CheckCircle2 size={20} /> Vinculado
+                </div>
+                <button 
+                  onClick={handleTelegramUnlink}
+                  style={{ backgroundColor: '#ef4444', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '0.5rem', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                >
+                  <Unlink size={16} /> Desvincular
+                </button>
+              </>
+            ) : (
+              <button 
+                onClick={handleTelegramLink}
+                disabled={telegramLinking}
+                style={{ backgroundColor: '#0ea5e9', color: 'white', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: telegramLinking ? 0.7 : 1 }}
+              >
+                <MessageCircle size={18} /> {telegramLinking ? 'Esperando vinculación...' : 'Vincular con Telegram'}
+              </button>
+            )}
+          </div>
         </div>
 
       </div>
