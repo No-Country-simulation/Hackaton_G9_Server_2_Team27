@@ -1,16 +1,18 @@
 package EnegiAI.Backend.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Map;
+import java.util.List;
 
 public record MLPredictionResponse(
-        String categoria,
-        Double probabilidad,
-        DetallesPrediccion detalles,
-        java.util.List<String> recomendaciones
+        @JsonProperty("categoria") String categoria,
+        @JsonProperty("probabilidad") Double probabilidad,
+        @JsonProperty("detalles") DetallesPrediccion detalles,
+        @JsonProperty("recomendaciones") List<String> recomendaciones
 ) {}
 
 record DetallesPrediccion(
-        Map<String, String> votos_detallados,
-        String metodo_decision,
-        Map<String, Double> latencias_ms
+        @JsonProperty("votos_detallados") Map<String, String> votos_detallados,
+        @JsonProperty("metodo_decision") String metodo_decision,
+        @JsonProperty("latencias_ms") Map<String, Double> latencias_ms
 ) {}

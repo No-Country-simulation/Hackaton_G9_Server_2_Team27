@@ -3,6 +3,7 @@ package EnegiAI.Backend.service;
 import EnegiAI.Backend.dto.ConsumoRequest;
 import EnegiAI.Backend.dto.MLPredictionResponse;
 import EnegiAI.Backend.model.Categoria;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
@@ -21,7 +22,7 @@ import org.springframework.web.client.RestTemplate;
  * predicción por defecto cuando el servicio no está disponible,
  * permitiendo que la aplicación continúe operando de forma controlada.
  */
-
+@Slf4j
 @Service
 public class DataScienceClient {
 
@@ -54,17 +55,20 @@ public class DataScienceClient {
      *         en caso de fallo.
      */
     public MLPredictionResponse obtenerPrediccion(ConsumoRequest request) {
+        log.info("[DataScienceClient] Enviando payload a ML API ({}): {}", dsApiUrl, request);
         try {
             MLPredictionResponse respuesta =
                     restTemplate.postForObject(dsApiUrl, request, MLPredictionResponse.class);
 
             if (respuesta == null || respuesta.categoria() == null) {
+                log.warn("[DataScienceClient] Respuesta nula o sin categoría desde ML API. Usando fallback.");
                 return valorPorDefecto();
             }
+            log.info("[DataScienceClient] Respuesta exitosa de ML API: {}", respuesta);
             return respuesta;
 
         } catch (RestClientException e) {
-            System.err.println("[DataScienceClient] Modelo no disponible o tardo demasiado: " + e.getMessage());
+            log.error("[DataScienceClient] Error crítico llamando al ML API ({}): {}", dsApiUrl, e.getMessage(), e);
             return valorPorDefecto();
         }
     }
