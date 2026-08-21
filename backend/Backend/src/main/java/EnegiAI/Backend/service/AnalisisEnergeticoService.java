@@ -78,7 +78,11 @@ public class AnalisisEnergeticoService {
         Categoria categoria = clasificacion.categoria();
         double probabilidad = clasificacion.probabilidad();
         DatosConsumo datosConsumo = new DatosConsumo(request);
-        List<String> recomendaciones = recomendacionService.generarRecomendaciones(categoria);
+        
+        List<String> recomendaciones = clasificacion.recomendaciones();
+        if (recomendaciones == null || recomendaciones.isEmpty()) {
+            recomendaciones = recomendacionService.generarRecomendaciones(categoria);
+        }
         double costoEstimado = estimacionFinancieraService.calcularCostoMensual(request);
 
         AnalisisEnergetico analisisEnergetico = new AnalisisEnergetico(

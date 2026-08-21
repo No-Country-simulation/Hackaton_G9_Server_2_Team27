@@ -45,7 +45,10 @@ export default function Register({ onRegisterSuccess, onBackToLogin }) {
         throw new Error(`Error del servidor (${response.status}) al registrar usuario`);
       }
 
-      if (onRegisterSuccess) onRegisterSuccess();
+      if (onRegisterSuccess) {
+        localStorage.setItem('userName', formData.nombre.split(' ')[0] || 'Usuario');
+        onRegisterSuccess();
+      }
     } catch (error) {
       console.error('Error real capturado:', error);
       setErrorMsg(error.message || 'No se pudo conectar con el servidor.');

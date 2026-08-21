@@ -24,7 +24,7 @@ public class ClasificacionService {
      * asociado a dicha predicción, facilitando su transporte dentro de
      * la lógica de negocio.
      */
-    public record ResultadoClasificacion(Categoria categoria, double probabilidad) {}
+    public record ResultadoClasificacion(Categoria categoria, double probabilidad, java.util.List<String> recomendaciones) {}
 
     private final DataScienceClient dataScienceClient;
 
@@ -54,6 +54,6 @@ public class ClasificacionService {
     public ResultadoClasificacion obtenerClasificacion(ConsumoRequest request) {
         var respuesta = dataScienceClient.obtenerPrediccion(request);
         Categoria categoria = Categoria.fromFront(respuesta.categoria());
-        return new ResultadoClasificacion(categoria, respuesta.probabilidad());
+        return new ResultadoClasificacion(categoria, respuesta.probabilidad(), respuesta.recomendaciones());
     }
 }

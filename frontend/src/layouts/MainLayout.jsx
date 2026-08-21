@@ -6,9 +6,10 @@ import { consultarVinculacionTelegram } from '@/services/telegramService';
 export default function MainLayout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   
-  // Estado para Telegram
+  // Estado para Telegram y Usuario
   const [telegramStatus, setTelegramStatus] = useState('unlinked'); // 'unlinked', 'pending', 'linked'
   const [sessionId, setSessionId] = useState(null);
+  const [userName, setUserName] = useState('Usuario');
 
   useEffect(() => {
     // Al cargar, revisar si ya está vinculado o en progreso
@@ -21,6 +22,11 @@ export default function MainLayout({ children }) {
     } else if (storedSessionId) {
       setTelegramStatus('pending');
       setSessionId(storedSessionId);
+    }
+
+    const storedUserName = localStorage.getItem('userName');
+    if (storedUserName) {
+      setUserName(storedUserName);
     }
   }, []);
 
@@ -157,7 +163,7 @@ export default function MainLayout({ children }) {
               </div>
             )}
 
-            <span style={{ fontSize: '0.875rem', color: '#475569', fontWeight: '500' }}>Hola, Usuario</span>
+            <span style={{ fontSize: '0.875rem', color: '#475569', fontWeight: '500' }}>Hola, {userName}</span>
             <div style={{ 
               width: '36px', 
               height: '36px', 

@@ -27,6 +27,7 @@ export default function Login({ onLoginSuccess }) {
 
       const data = await response.json();
       localStorage.setItem('token', data.token || 'simulated_jwt_token');
+      localStorage.setItem('userName', email.split('@')[0]);
       if (onLoginSuccess) onLoginSuccess();
     } catch (error) {
       console.error('Error real capturado:', error);

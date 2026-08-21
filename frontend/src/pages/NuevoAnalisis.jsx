@@ -13,7 +13,8 @@ import {
   Meh, 
   CheckCircle2, 
   DollarSign, 
-  AlertCircle 
+  AlertCircle,
+  Loader2
 } from 'lucide-react';
 import { realizarAnalisisEnergetico } from '@/services/analisisService';
 import { notificarTelegram } from '@/services/telegramService';
@@ -166,6 +167,15 @@ export default function NuevoAnalisis() {
               <span>{errorMsg}</span>
             </div>
           )}
+
+          <div style={{ marginBottom: '1.25rem' }}>
+            <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '600', marginBottom: '0.5rem', display: 'block' }}>Ejemplos rápidos para jurado:</span>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <button type="button" onClick={() => setFormData({ consumoMensual: '250', usoHorarioPico: 'false', cantidadEquipos: '5', tipoInmueble: 'Casa', horasAltoConsumo: '3', metrosCuadrados: '80', cantidadPersonas: '2' })} style={presetBtnStyle}>🏠 Casa Eficiente</button>
+              <button type="button" onClick={() => setFormData({ consumoMensual: '800', usoHorarioPico: 'true', cantidadEquipos: '15', tipoInmueble: 'Comercial', horasAltoConsumo: '10', metrosCuadrados: '150', cantidadPersonas: '8' })} style={presetBtnStyle}>🏢 Local Moderado</button>
+              <button type="button" onClick={() => setFormData({ consumoMensual: '2500', usoHorarioPico: 'true', cantidadEquipos: '40', tipoInmueble: 'Pequeña Empresa', horasAltoConsumo: '16', metrosCuadrados: '400', cantidadPersonas: '25' })} style={presetBtnStyle}>🏭 Industria Inef.</button>
+            </div>
+          </div>
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             
@@ -324,7 +334,11 @@ export default function NuevoAnalisis() {
                 style={{ ...btnStyle, backgroundColor: '#059669', color: '#ffffff', fontWeight: 'bold' }}
                 disabled={loading}
               >
-                <Send size={16} /> {loading ? 'Procesando...' : 'Analizar consumo'}
+                {loading ? (
+                  <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Analizando patrones con IA...</>
+                ) : (
+                  <><Send size={16} /> Analizar consumo</>
+                )}
               </button>
             </div>
           </form>
@@ -576,3 +590,21 @@ const metricCardStyle = {
   display: 'flex',
   flexDirection: 'column',
 };
+
+const presetBtnStyle = {
+  backgroundColor: '#f1f5f9',
+  color: '#334155',
+  border: '1px solid #cbd5e1',
+  padding: '0.4rem 0.75rem',
+  borderRadius: '2rem',
+  fontSize: '0.75rem',
+  fontWeight: '600',
+  cursor: 'pointer',
+  transition: 'all 0.2s ease'
+};
+// Add global spinner keyframes safely
+if (typeof document !== 'undefined') {
+  const style = document.createElement('style');
+  style.innerHTML = `@keyframes spin { 100% { transform: rotate(360deg); } }`;
+  document.head.appendChild(style);
+}
