@@ -78,7 +78,23 @@ def construir_dataframes(data: EnergyRequest):
 # ==========================================
 def predecir_con_tiempo(modelo, df):
     t0 = time.time()
+    
+    print("\n" + "="*40)
+    print(f"🔍 DEBUGGING ML INFERENCE")
+    print(f"Modelo tipo: {type(modelo).__name__}")
+    print(f"Columnas enviadas: {df.columns.tolist()}")
+    print(f"Valores exactos (DataFrame):\n{df.to_string(index=False)}")
+    
+    try:
+        proba = modelo.predict_proba(df)
+        print(f"🎯 Probabilidades (predict_proba): {proba}")
+    except Exception as e:
+        print(f"⚠️ Advertencia predict_proba falló: {e}")
+        
     prediccion = int(modelo.predict(df)[0])
+    print(f"🧠 Predicción (predict) mapeada a clase: {prediccion} ({TARGET_MAPPING.get(prediccion, 'Desconocido')})")
+    print("="*40 + "\n")
+    
     probabilidad = float(modelo.predict_proba(df)[0][prediccion])
     duracion_ms = (time.time() - t0) * 1000
     return prediccion, probabilidad, duracion_ms
@@ -135,51 +151,11 @@ def predict_ensamble(data: EnergyRequest):
     }
 
     # ==========================================
-    # 6.5 THRESHOLD FALLBACK (Override de seguridad para evitar sesgo)
-    # ==========================================
-    if data.consumo_kwh < 200:
-        prediccion_final = 0
-        probabilidad_final = 0.92
-        metodo = "Threshold Fallback (Consumo bajo)"
-    elif data.consumo_kwh > 500 or data.horas_alto_consumo >= 6:
-        prediccion_final = 2
-        probabilidad_final = 0.88
-        metodo = "Threshold Fallback (Consumo alto / muchas horas pico)"
-    else:
-        prediccion_final = 1
-        probabilidad_final = 0.75
-        metodo = "Threshold Fallback (Consumo promedio)"
-
-    # Recomendaciones dinámicas por categoría
-    recs = []
-    if prediccion_final == 0:
-        recs = [
-            "¡Excelente trabajo! Tu perfil energético está altamente optimizado.",
-            "Sigue aprovechando la luz natural durante el día para minimizar el uso de iluminación artificial.",
-            "Considera integrar un pequeño panel solar o baterías de respaldo para ser aún más autosuficiente.",
-            "Mantén el ciclo regular de mantenimiento en tus equipos para asegurar que no pierdan eficiencia."
-        ]
-    elif prediccion_final == 1:
-        recs = [
-            "Identifica y desconecta equipos que se queden en modo de espera (standby) cuando no los usas.",
-            "Ajusta la temperatura de los sistemas de climatización a niveles moderados.",
-            "Planea renovar gradualmente tus electrodomésticos por aquellos con certificación de alta eficiencia energética."
-        ]
-    else:
-        recs = [
-            "Reduce drásticamente el uso de equipos pesados durante las horas pico de la red eléctrica.",
-            "Reemplaza de forma urgente cualquier bombilla incandescente o halógena por tecnología LED.",
-            "Revisa posibles fugas de aire frío/caliente en puertas y ventanas que fuercen tu climatización.",
-            "Analiza tu historial para detectar qué aparato específico está disparando el consumo mensual."
-        ]
-
-    # ==========================================
     # 7. RESPUESTA FINAL
     # ==========================================
     return {
         "categoria": TARGET_MAPPING[prediccion_final],
         "probabilidad": round(probabilidad_final, 4),
-        "recomendaciones": recs,
         "detalles": {
             "votos_detallados": nombres_pred,
             "metodo_decision": metodo,
