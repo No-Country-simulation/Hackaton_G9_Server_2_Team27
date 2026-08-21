@@ -175,7 +175,7 @@ export default function NuevoAnalisis() {
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               <button type="button" onClick={() => setFormData({ consumoMensual: '250', usoHorarioPico: 'false', cantidadEquipos: '5', tipoInmueble: 'Casa', horasAltoConsumo: '3', metrosCuadrados: '80', cantidadPersonas: '2' })} style={presetBtnStyle}><span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><Home size={14} /> Casa Eficiente</span></button>
               <button type="button" onClick={() => setFormData({ consumoMensual: '800', usoHorarioPico: 'true', cantidadEquipos: '15', tipoInmueble: 'Comercial', horasAltoConsumo: '10', metrosCuadrados: '150', cantidadPersonas: '8' })} style={presetBtnStyle}><span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><Store size={14} /> Local Moderado</span></button>
-              <button type="button" onClick={() => setFormData({ consumoMensual: '2500', usoHorarioPico: 'true', cantidadEquipos: '40', tipoInmueble: 'Pequeña Empresa', horasAltoConsumo: '16', metrosCuadrados: '400', cantidadPersonas: '25' })} style={presetBtnStyle}><span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><Factory size={14} /> Industria Inef.</span></button>
+              <button type="button" onClick={() => setFormData({ consumoMensual: '2500', usoHorarioPico: 'true', cantidadEquipos: '40', tipoInmueble: 'Comercial', horasAltoConsumo: '16', metrosCuadrados: '400', cantidadPersonas: '25' })} style={presetBtnStyle}><span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><Factory size={14} /> Industria Inef.</span></button>
             </div>
           </div>
 
@@ -253,7 +253,6 @@ export default function NuevoAnalisis() {
                     <option value="Casa">Casa</option>
                     <option value="Departamento">Departamento</option>
                     <option value="Comercial">Comercial</option>
-                    <option value="Pequeña Empresa">Pequeña Empresa</option>
                   </select>
                 </div>
               </div>
