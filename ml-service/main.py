@@ -113,8 +113,9 @@ def predecir_con_tiempo(modelo, data: EnergyRequest, nombre_modelo):
         'uso_horario_pico': [bool(data.uso_horario_pico)]
     }
     
-    if raw_dict['tipo_inmueble'][0].lower() in ["pequeña empresa", "pequeñas empresas"]:
-        raw_dict['tipo_inmueble'][0] = "Comercial"
+    # Mapear Comercial a "Pequeño Comercio" (que es como se entrenó el modelo)
+    if raw_dict['tipo_inmueble'][0].lower() in ["comercial", "pequeña empresa", "pequeñas empresas"]:
+        raw_dict['tipo_inmueble'][0] = "Pequeño Comercio"
         
     df_crudo = pd.DataFrame(raw_dict)
     
