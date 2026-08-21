@@ -10,6 +10,7 @@ import {
   Sun
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 
 const MODULOS = [
   { id: 1, nombre: 'Dashboard', ruta: '/', icon: Zap },
@@ -25,6 +26,16 @@ const MODULOS = [
 export default function SideBar({ isOpen = true }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const [showToast, setShowToast] = useState(false);
+
+  const handleNav = (ruta) => {
+    if (['/historial', '/comparacion', '/simulador', '/configuracion', '/ranking', '/calculadora-solar'].includes(ruta)) {
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
+    } else {
+      navigate(ruta);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -58,7 +69,7 @@ export default function SideBar({ isOpen = true }) {
             return (
               <li key={item.id}>
                 <button
-                  onClick={() => navigate(item.ruta)}
+                  onClick={() => handleNav(item.ruta)}
                   style={{
                     width: '100%',
                     border: 'none',
@@ -97,6 +108,26 @@ export default function SideBar({ isOpen = true }) {
           <span>Cerrar sesión</span>
         </button>
       </div>
+      {/* Toast Notification */}
+      {showToast && (
+        <div style={{
+          position: 'fixed',
+          bottom: '1.5rem',
+          right: '1.5rem',
+          backgroundColor: '#334155',
+          color: 'white',
+          padding: '0.75rem 1.25rem',
+          borderRadius: '0.5rem',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          zIndex: 50,
+          animation: 'fadeIn 0.3s ease-out'
+        }}>
+          🚀 Próximamente: Esta función está en desarrollo
+        </div>
+      )}
     </aside>
   );
 }
