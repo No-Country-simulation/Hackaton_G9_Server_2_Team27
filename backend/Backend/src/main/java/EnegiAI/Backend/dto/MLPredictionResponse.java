@@ -5,7 +5,8 @@ import java.util.Map;
 public record MLPredictionResponse(
         String categoria,
         Double probabilidad,
-        DetallesPrediccion detalles
+        DetallesPrediccion detalles,
+        java.util.List<String> recomendaciones
 ) {}
 
 record DetallesPrediccion(

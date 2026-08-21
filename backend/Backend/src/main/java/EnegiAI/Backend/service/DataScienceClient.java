@@ -79,6 +79,6 @@ public class DataScienceClient {
      * @return Predicción por defecto utilizada como estrategia de recuperación.
      */
     private MLPredictionResponse valorPorDefecto() {
-        return new MLPredictionResponse(Categoria.Moderado.toString(), 0.5, null);
+        return new MLPredictionResponse(Categoria.Moderado.toString(), 0.5, null, null);
     }
 }
