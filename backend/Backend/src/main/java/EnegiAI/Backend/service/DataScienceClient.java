@@ -39,7 +39,13 @@ public class DataScienceClient {
     public DataScienceClient(RestTemplate restTemplate,
                               @Value("${ds.api.url}") String dsApiUrl) {
         this.restTemplate = restTemplate;
-        this.dsApiUrl = dsApiUrl;
+        
+        // Sanitizar URL: Si el usuario pasa solo el dominio base de Railway, le añadimos el endpoint automáticamente.
+        if (dsApiUrl != null && !dsApiUrl.endsWith("/analisis-energetico")) {
+            this.dsApiUrl = dsApiUrl.endsWith("/") ? dsApiUrl + "analisis-energetico" : dsApiUrl + "/analisis-energetico";
+        } else {
+            this.dsApiUrl = dsApiUrl;
+        }
     }
 
     /**
