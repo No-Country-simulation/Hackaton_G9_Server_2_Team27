@@ -62,3 +62,24 @@ export const obtenerHistorialAnalisis = async () => {
 
   return await response.json();
 };
+
+/**
+ * Calcula la cantidad de paneles solares necesarios.
+ * @param {Object} panelesRequest Datos del consumo y horas de sol pico
+ * @returns {Promise<Object>} Promesa con PanelesSolaresResponse
+ */
+export const calcularPanelesSolares = async (panelesRequest) => {
+  const response = await fetch(`${API_URL}/analisis-energetico/paneles-solares`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(panelesRequest),
+  });
+
+  if (!response.ok) {
+    throw new Error('Error al calcular los paneles solares');
+  }
+
+  return await response.json();
+};;
