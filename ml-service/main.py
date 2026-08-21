@@ -2,14 +2,21 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import joblib
 import pandas as pd
+import numpy as np
 from collections import Counter
 import time
 import sys
 import os
+import logging
+
+# Configurar logging estructurado
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger("uvicorn.info")
 
 app = FastAPI(title="EnergiAI ML Ensamble (4 Modelos)", version="1.0.0")
 
 from download_models import descargar_desde_oci
+# Se comenta descargar_desde_oci() si los modelos ya fueron descargados, o se deja para que siempre asegure que están ahí.
 descargar_desde_oci()
 
 # ==========================================
@@ -26,82 +33,120 @@ class EnergyRequest(BaseModel):
 
 
 # ==========================================
-# 2. CARGA DE LOS 4 MODELOS ENTRENADOS
+# 2. CARGA DE ARTEFACTOS (MODELOS COMO PIPELINES)
 # ==========================================
-def load_model(nombre_archivo):
+def load_artifact(nombre_archivo):
     ruta = os.path.join("modelos", nombre_archivo)
     if not os.path.exists(ruta):
-        raise FileNotFoundError(f"No se encontró el modelo: {ruta}")
+        raise FileNotFoundError(f"No se encontró el artefacto: {ruta}")
     return joblib.load(ruta)
 
-
 try:
-    model_xgb = load_model('energia_pipeline_mvp.pkl')
-    model_logreg = load_model('modelo_clasificacion_pipeline_mvp.pkl')
-    model_knn = load_model('modelo_knn_pipeline.pkl')
-    model_rf = load_model('modelo_random_forest.joblib')
-    print("✅ Los 4 modelos de ensamble han sido cargados correctamente en memoria.")
+    # Modelos (Ya incluyen Pipeline de preprocesamiento interno)
+    model_xgb = load_artifact('energia_pipeline_mvp.pkl')
+    model_logreg = load_artifact('modelo_clasificacion_pipeline_mvp.pkl')
+    model_knn = load_artifact('modelo_knn_pipeline.pkl')
+    model_rf = load_artifact('modelo_random_forest.joblib')
+    
+    logger.info("✅ Los 4 pipelines de ensamble han sido cargados correctamente en memoria.")
+        
 except Exception as e:
-    print(f"❌ Error crítico al cargar los artefactos: {e}")
+    logger.error(f"❌ Error crítico al cargar los artefactos: {e}")
     sys.exit(1)
 
 TARGET_MAPPING = {0: 'Eficiente', 1: 'Moderado', 2: 'Ineficiente'}
 
+# ==========================================
+# 3. EXTRACCIÓN DE ORDEN DE COLUMNAS
+# ==========================================
+def get_expected_columns(modelo):
+    """
+    Intenta extraer la propiedad feature_names_in_ de un Pipeline de sklearn.
+    """
+    if hasattr(modelo, "feature_names_in_"):
+        return modelo.feature_names_in_.tolist()
+    
+    # Si es un pipeline, buscar en el primer step (usualmente el ColumnTransformer)
+    if hasattr(modelo, "steps"):
+        ct = modelo.steps[0][1]
+        if hasattr(ct, "feature_names_in_"):
+            return ct.feature_names_in_.tolist()
+            
+    # Fallback genérico si no se encuentra (caso muy raro)
+    return ['consumo_kwh', 'uso_horario_pico', 'cantidad_equipos', 'tipo_vivienda', 'horas_alto_consumo']
 
 # ==========================================
-# 3. CONSTRUCCIÓN DE LOS DATAFRAMES DE ENTRADA
+# 4. CONSTRUCCIÓN DEL DATAFRAME EXACTO
 # ==========================================
-def construir_dataframes(data: EnergyRequest):
-    datos_base = {
-        'consumo_kwh': data.consumo_kwh,
-        'uso_horario_pico': data.uso_horario_pico,
-        'cantidad_equipos': data.cantidad_equipos,
-        'horas_alto_consumo': data.horas_alto_consumo
-    }
-
-    tipo_inmueble_inferencia = data.tipo_inmueble
-    if tipo_inmueble_inferencia.lower() in ["pequeña empresa", "pequeñas empresas"]:
-        # Fallback seguro para evitar error de Unknown Category en Scikit-Learn
-        tipo_inmueble_inferencia = "Comercial" # O el valor genérico soportado
-
-    # XGBoost, Regresion Logistica y KNN esperan "tipo_vivienda"
-    df_vivienda = pd.DataFrame([{**datos_base, 'tipo_vivienda': tipo_inmueble_inferencia}])
-
-    # Random Forest esperan "tipo_inmueble" (nombre distinto, mismo dato)
-    df_inmueble = pd.DataFrame([{**datos_base, 'tipo_inmueble': tipo_inmueble_inferencia}])
-
-    return df_vivienda, df_inmueble
-
+def alinear_dataframe(df_crudo, expected_cols):
+    """
+    Toma un DataFrame crudo con todas las posibles variables y devuelve un 
+    DataFrame filtrado y ordenado EXACTAMENTE según expected_cols.
+    """
+    df_aligned = df_crudo.copy()
+    
+    # Manejo dinámico si espera tipo_vivienda en vez de tipo_inmueble
+    if 'tipo_vivienda' in expected_cols and 'tipo_inmueble' in df_aligned.columns:
+        df_aligned['tipo_vivienda'] = df_aligned['tipo_inmueble']
+        
+    for col in expected_cols:
+        if col not in df_aligned.columns:
+            logger.warning(f"Falta columna esperada {col}, rellenando con 0/None")
+            df_aligned[col] = 0
+            
+    return df_aligned[expected_cols]
 
 # ==========================================
-# 4. UNA PREDICCIÓN INDIVIDUAL, CON SU PROBABILIDAD REAL
+# 5. PREDICCIÓN INDIVIDUAL CON LOGS
 # ==========================================
-def predecir_con_tiempo(modelo, df):
+def predecir_con_tiempo(modelo, data: EnergyRequest, nombre_modelo):
     t0 = time.time()
     
-    print("\n" + "="*40)
-    print(f"🔍 DEBUGGING ML INFERENCE")
-    print(f"Modelo tipo: {type(modelo).__name__}")
-    print(f"Columnas enviadas: {df.columns.tolist()}")
-    print(f"Valores exactos (DataFrame):\n{df.to_string(index=False)}")
+    # 5.1 Construir raw payload
+    raw_dict = {
+        'consumo_kwh': [data.consumo_kwh],
+        'cantidad_equipos': [data.cantidad_equipos],
+        'horas_alto_consumo': [data.horas_alto_consumo],
+        'metros_cuadrados': [data.metros_cuadrados if data.metros_cuadrados is not None else 100],
+        'cantidad_personas': [data.cantidad_personas if data.cantidad_personas is not None else 3],
+        'tipo_inmueble': [data.tipo_inmueble],
+        'uso_horario_pico': [bool(data.uso_horario_pico)]
+    }
+    
+    if raw_dict['tipo_inmueble'][0].lower() in ["pequeña empresa", "pequeñas empresas"]:
+        raw_dict['tipo_inmueble'][0] = "Comercial"
+        
+    df_crudo = pd.DataFrame(raw_dict)
+    
+    # 5.2 Alinear estricto al pipeline
+    expected_features = get_expected_columns(modelo)
+    df_to_predict = alinear_dataframe(df_crudo, expected_features)
+    
+    logger.info(f"[{nombre_modelo}] Features inyectadas ({len(expected_features)}): {expected_features}")
     
     try:
-        proba = modelo.predict_proba(df)
-        print(f"🎯 Probabilidades (predict_proba): {proba}")
+        proba = modelo.predict_proba(df_to_predict)[0]
+        prob_rounded = [round(p, 4) for p in proba]
+        logger.info(f"[{nombre_modelo}] Probabilidades: {prob_rounded}")
     except Exception as e:
-        print(f"⚠️ Advertencia predict_proba falló: {e}")
+        logger.warning(f"[{nombre_modelo}] predict_proba falló: {e}")
+        proba = [0, 0, 0] # fallback
         
-    prediccion = int(modelo.predict(df)[0])
-    print(f"🧠 Predicción (predict) mapeada a clase: {prediccion} ({TARGET_MAPPING.get(prediccion, 'Desconocido')})")
-    print("="*40 + "\n")
+    try:
+        prediccion = int(modelo.predict(df_to_predict)[0])
+    except Exception as e:
+        logger.warning(f"[{nombre_modelo}] predict falló: {e}")
+        prediccion = 1
+        
+    logger.info(f"[{nombre_modelo}] Predicción: {prediccion} ({TARGET_MAPPING.get(prediccion, 'Desconocido')})")
     
-    probabilidad = float(modelo.predict_proba(df)[0][prediccion])
+    probabilidad = float(proba[prediccion]) if len(proba) > prediccion else 0.0
     duracion_ms = (time.time() - t0) * 1000
     return prediccion, probabilidad, duracion_ms
 
 
 # ==========================================
-# 5. ENDPOINTS
+# 6. ENDPOINTS
 # ==========================================
 @app.get("/health")
 def health():
@@ -110,18 +155,19 @@ def health():
 
 @app.post("/analisis-energetico")
 def predict_ensamble(data: EnergyRequest):
-    df_vivienda, df_inmueble = construir_dataframes(data)
+    logger.info(f"--- NUEVA INFERENCIA RECIBIDA ---\nPayload: {data}")
 
     try:
-        pred_xgb, prob_xgb, t_xgb = predecir_con_tiempo(model_xgb, df_vivienda)
-        pred_logreg, prob_logreg, t_logreg = predecir_con_tiempo(model_logreg, df_vivienda)
-        pred_knn, prob_knn, t_knn = predecir_con_tiempo(model_knn, df_vivienda)
-        pred_rf, prob_rf, t_rf = predecir_con_tiempo(model_rf, df_inmueble)
+        pred_xgb, prob_xgb, t_xgb = predecir_con_tiempo(model_xgb, data, "XGBoost")
+        pred_logreg, prob_logreg, t_logreg = predecir_con_tiempo(model_logreg, data, "LogReg")
+        pred_knn, prob_knn, t_knn = predecir_con_tiempo(model_knn, data, "KNN")
+        pred_rf, prob_rf, t_rf = predecir_con_tiempo(model_rf, data, "RandomForest")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Fallo en la inferencia del ensamble: {str(e)}")
+        logger.error(f"Fallo en la inferencia del ensamble: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Fallo en la inferencia: {str(e)}")
 
     # ==========================================
-    # 6. VOTACIÓN POR MAYORÍA + DESEMPATE
+    # 7. VOTACIÓN POR MAYORÍA + DESEMPATE
     # ==========================================
     votos = [pred_xgb, pred_logreg, pred_knn, pred_rf]
     conteo = Counter(votos)
@@ -150,9 +196,8 @@ def predict_ensamble(data: EnergyRequest):
         "Random Forest": TARGET_MAPPING[pred_rf]
     }
 
-    # ==========================================
-    # 7. RESPUESTA FINAL
-    # ==========================================
+    logger.info(f"🏆 DECISIÓN FINAL: {TARGET_MAPPING[prediccion_final]} | Método: {metodo}")
+
     return {
         "categoria": TARGET_MAPPING[prediccion_final],
         "probabilidad": round(probabilidad_final, 4),
