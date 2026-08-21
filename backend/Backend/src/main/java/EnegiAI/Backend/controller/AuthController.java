@@ -7,7 +7,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = {"https://hackaton-g9-server-2-team27.vercel.app", "http://localhost:5173", "http://localhost:3000"})
 public class AuthController {
 
     @PostMapping("/login")
