@@ -14,7 +14,9 @@ import {
   CheckCircle2, 
   DollarSign, 
   AlertCircle,
-  Loader2
+  Loader2,
+  Store,
+  Factory
 } from 'lucide-react';
 import { realizarAnalisisEnergetico } from '@/services/analisisService';
 import { notificarTelegram } from '@/services/telegramService';
@@ -171,9 +173,9 @@ export default function NuevoAnalisis() {
           <div style={{ marginBottom: '1.25rem' }}>
             <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '600', marginBottom: '0.5rem', display: 'block' }}>Ejemplos rápidos para jurado:</span>
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <button type="button" onClick={() => setFormData({ consumoMensual: '250', usoHorarioPico: 'false', cantidadEquipos: '5', tipoInmueble: 'Casa', horasAltoConsumo: '3', metrosCuadrados: '80', cantidadPersonas: '2' })} style={presetBtnStyle}>🏠 Casa Eficiente</button>
-              <button type="button" onClick={() => setFormData({ consumoMensual: '800', usoHorarioPico: 'true', cantidadEquipos: '15', tipoInmueble: 'Comercial', horasAltoConsumo: '10', metrosCuadrados: '150', cantidadPersonas: '8' })} style={presetBtnStyle}>🏢 Local Moderado</button>
-              <button type="button" onClick={() => setFormData({ consumoMensual: '2500', usoHorarioPico: 'true', cantidadEquipos: '40', tipoInmueble: 'Pequeña Empresa', horasAltoConsumo: '16', metrosCuadrados: '400', cantidadPersonas: '25' })} style={presetBtnStyle}>🏭 Industria Inef.</button>
+              <button type="button" onClick={() => setFormData({ consumoMensual: '250', usoHorarioPico: 'false', cantidadEquipos: '5', tipoInmueble: 'Casa', horasAltoConsumo: '3', metrosCuadrados: '80', cantidadPersonas: '2' })} style={presetBtnStyle}><span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><Home size={14} /> Casa Eficiente</span></button>
+              <button type="button" onClick={() => setFormData({ consumoMensual: '800', usoHorarioPico: 'true', cantidadEquipos: '15', tipoInmueble: 'Comercial', horasAltoConsumo: '10', metrosCuadrados: '150', cantidadPersonas: '8' })} style={presetBtnStyle}><span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><Store size={14} /> Local Moderado</span></button>
+              <button type="button" onClick={() => setFormData({ consumoMensual: '2500', usoHorarioPico: 'true', cantidadEquipos: '40', tipoInmueble: 'Pequeña Empresa', horasAltoConsumo: '16', metrosCuadrados: '400', cantidadPersonas: '25' })} style={presetBtnStyle}><span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><Factory size={14} /> Industria Inef.</span></button>
             </div>
           </div>
 
@@ -483,27 +485,42 @@ export default function NuevoAnalisis() {
                   <Zap size={16} color="#eab308" /> Recomendaciones clave
                 </h4>
                 <div style={{ display: 'grid', gap: '0.85rem' }}>
-                  {resultado.recomendaciones?.recomendaciones?.map((rec, idx) => (
-                    <div 
-                      key={idx} 
-                      style={{ 
-                        display: 'flex', 
-                        alignItems: 'flex-start', 
-                        gap: '0.85rem', 
-                        fontSize: '0.825rem', 
-                        color: '#334155',
-                        backgroundColor: '#f8fafc',
-                        padding: '0.85rem',
-                        borderRadius: '0.75rem',
-                        border: '1px solid #f1f5f9'
-                      }}
-                    >
-                      <div style={{ backgroundColor: '#ecfdf5', padding: '0.35rem', borderRadius: '0.4rem', flexShrink: 0, marginTop: '2px' }}>
-                        <CheckCircle2 size={16} color="#16a34a" />
+                  {(() => {
+                    let recs = [];
+                    if (Array.isArray(resultado.recomendaciones)) {
+                      recs = resultado.recomendaciones;
+                    } else if (Array.isArray(resultado.recomendaciones?.recomendaciones)) {
+                      recs = resultado.recomendaciones.recomendaciones;
+                    }
+                    if (!recs || recs.length === 0) {
+                      recs = [
+                        "Intenta reducir el uso de equipos durante los horarios de mayor tarifa.",
+                        "Revisa qué electrodomésticos consumen más energía en modo de espera."
+                      ];
+                    }
+
+                    return recs.map((rec, idx) => (
+                      <div 
+                        key={idx} 
+                        style={{ 
+                          display: 'flex', 
+                          alignItems: 'flex-start', 
+                          gap: '0.85rem', 
+                          fontSize: '0.825rem', 
+                          color: '#334155',
+                          backgroundColor: '#f8fafc',
+                          padding: '0.85rem',
+                          borderRadius: '0.75rem',
+                          border: '1px solid #f1f5f9'
+                        }}
+                      >
+                        <div style={{ backgroundColor: '#ecfdf5', padding: '0.35rem', borderRadius: '0.4rem', flexShrink: 0, marginTop: '2px' }}>
+                          <CheckCircle2 size={16} color="#16a34a" />
+                        </div>
+                        <span style={{ lineHeight: '1.45' }}>{rec}</span>
                       </div>
-                      <span style={{ lineHeight: '1.45' }}>{rec}</span>
-                    </div>
-                  ))}
+                    ));
+                  })()}
                 </div>
               </div>
 

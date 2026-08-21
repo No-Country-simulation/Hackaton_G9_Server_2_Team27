@@ -26,7 +26,13 @@ export default function DetalleModal({ item, onClose }) {
 
   const probabilidad = Math.round((analisis.probabilidad || item.probabilidad || 0) * 100);
   const costoEstimado = Number(analisis.costoEstimadoMensual ?? item.costoEstimadoMensual ?? 0).toFixed(2).replace('.', ',');
-  const recomendaciones = item.recomendaciones || [];
+  let recomendaciones = item.recomendaciones || [];
+  if (recomendaciones.length === 0) {
+    recomendaciones = [
+      "Intenta reducir el uso de equipos durante los horarios de mayor tarifa.",
+      "Revisa qué electrodomésticos consumen más energía en modo de espera."
+    ];
+  }
 
   // Verificación de uso en horario pico
   const esHorarioPico = consumo.usoHorarioPico ?? item.usoHorarioPico ?? false;
