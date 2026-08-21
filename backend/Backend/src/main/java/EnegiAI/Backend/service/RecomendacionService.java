@@ -33,13 +33,22 @@ public class RecomendacionService {
 
         return switch (categoria) {
             case Eficiente -> List.of(
-                    "¡Buen trabajo! Tu consumo se encuentra dentro de parámetros estables."
+                    "¡Excelente trabajo! Tu perfil energético está altamente optimizado.",
+                    "Sigue aprovechando la luz natural durante el día para minimizar el uso de iluminación artificial.",
+                    "Considera integrar un pequeño panel solar o baterías de respaldo para ser aún más autosuficiente.",
+                    "Mantén el ciclo regular de mantenimiento en tus equipos para asegurar que no pierdan eficiencia."
             );
             case Moderado -> List.of(
-                    "Tu consumo eléctrico es moderado, sigue las recomendaciones en EnergiIA."
+                    "Identifica y desconecta equipos que se queden en modo de espera (standby) cuando no los usas.",
+                    "Ajusta la temperatura de los sistemas de climatización (aire acondicionado o calefacción) a niveles moderados.",
+                    "Planea renovar gradualmente tus electrodomésticos por aquellos con certificación de alta eficiencia energética.",
+                    "Considera agrupar las actividades de mayor consumo (como lavado de ropa) fuera del horario pico."
             );
             case Ineficiente -> List.of(
-                    "Tu consumo eléctrico es alto, te recomendamos seguir las instrucciones de EnergiIA."
+                    "Reduce drásticamente el uso de equipos pesados durante las horas pico de la red eléctrica.",
+                    "Reemplaza de forma urgente cualquier bombilla incandescente o halógena por tecnología LED.",
+                    "Revisa posibles fugas de aire frío/caliente en puertas y ventanas que fuercen tu climatización.",
+                    "Analiza tu historial para detectar qué aparato específico está disparando el consumo mensual."
             );
         };
     }
