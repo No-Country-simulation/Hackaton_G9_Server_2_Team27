@@ -6,7 +6,8 @@ import {
   SlidersHorizontal, 
   Trophy, 
   Settings, 
-  LogOut 
+  LogOut,
+  Sun
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -16,6 +17,7 @@ const MODULOS = [
   { id: 3, nombre: 'Historial', ruta: '/historial', icon: History },
   { id: 4, nombre: 'Comparación', ruta: '/comparacion', icon: BarChart2 },
   { id: 5, nombre: 'Simulador', ruta: '/simulador', icon: SlidersHorizontal },
+  { id: 8, nombre: 'Calculadora Solar', ruta: '/calculadora-solar', icon: Sun },
   { id: 6, nombre: 'Ranking', ruta: '/ranking', icon: Trophy },
   { id: 7, nombre: 'Configuración', ruta: '/configuracion', icon: Settings },
 ];

@@ -10,6 +10,7 @@ import Ranking from '@/pages/Ranking';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import Configuracion from '@/pages/Configuracion';
+import CalculadoraSolar from '@/pages/CalculadoraSolar';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(
@@ -46,6 +47,7 @@ export default function App() {
         <Route path="/historial" element={<Historial />} />
         <Route path="/comparacion" element={<Comparacion />} />
         <Route path="/simulador" element={<Simulador />} />
+        <Route path="/calculadora-solar" element={<CalculadoraSolar />} />
         <Route path="/ranking" element={<Ranking />} />
         <Route path="/configuracion" element={<Configuracion />} />
       </Routes>
