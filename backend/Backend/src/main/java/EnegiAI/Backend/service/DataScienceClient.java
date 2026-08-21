@@ -37,7 +37,7 @@ public class DataScienceClient {
      * @param dsApiUrl URL base del servicio de Data Science.
      */
     public DataScienceClient(RestTemplate restTemplate,
-                              @Value("${ds.api.url}") String dsApiUrl) {
+                              @Value("${ml.service.url}") String dsApiUrl) {
         this.restTemplate = restTemplate;
         
         // Sanitizar URL: Si el usuario pasa solo el dominio base de Railway, le añadimos el endpoint automáticamente.
