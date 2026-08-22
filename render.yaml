@@ -21,5 +21,4 @@ services:
       - key: DS_API_URL
         value: https://energia-ml-service.onrender.com/analisis-energetico
       - key: TELEGRAM_BOT_TOKEN
-        # REEMPLAZA ESTO EN EL PANEL DE RENDER O AQUÍ CON TU NUEVO TOKEN SI USAS OTRO BOT
-        value: "8946772205:AAFlYWhxSGs-AuJFF_qFFWMDM_Hxufte8H0"
+        sync: false
