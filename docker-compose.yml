@@ -8,14 +8,12 @@ services:
     platform: linux/amd64
     ports:
       - "8000:8000"
-    env_file:
-      - ./ml-service/.env
     networks:
       - energia_network
 
   backend:
     build: 
-      context: ./backend/Backend
+      context: ./backend
       dockerfile: Dockerfile
     platform: linux/amd64
     ports:
