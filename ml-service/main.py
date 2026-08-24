@@ -15,9 +15,8 @@ logger = logging.getLogger("uvicorn.info")
 
 app = FastAPI(title="EnergiAI ML Ensamble (4 Modelos)", version="1.0.0")
 
-from download_models import descargar_desde_oci
-# Se comenta descargar_desde_oci() si los modelos ya fueron descargados, o se deja para que siempre asegure que están ahí.
-descargar_desde_oci()
+# Modelos ya no se descargan de la nube, se usan los locales
+# descargar_desde_oci()
 
 # ==========================================
 # 1. ESQUEMA DE ENTRADA (contrato con Java)
@@ -36,7 +35,7 @@ class EnergyRequest(BaseModel):
 # 2. CARGA DE ARTEFACTOS (MODELOS COMO PIPELINES)
 # ==========================================
 def load_artifact(nombre_archivo):
-    ruta = os.path.join("modelos", nombre_archivo)
+    ruta = nombre_archivo
     if not os.path.exists(ruta):
         raise FileNotFoundError(f"No se encontró el artefacto: {ruta}")
     return joblib.load(ruta)

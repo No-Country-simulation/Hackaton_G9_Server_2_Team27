@@ -1,3 +1,10 @@
 .env
 modelos/
 __pycache__/
+
+# Secrets
+.env
+*.env
+.env.*
+*.pem
+*.key

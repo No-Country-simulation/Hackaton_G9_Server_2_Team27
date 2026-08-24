@@ -224,3 +224,10 @@ build/
 .env.development
 .env.production
 
+
+# Secrets
+.env
+*.env
+.env.*
+*.pem
+*.key
