@@ -13,6 +13,21 @@ import logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("uvicorn.info")
 
+# Monkey-patch para arreglar compatibilidad de XGBoost con Scikit-Learn 1.6+ en entornos desplegados
+import xgboost as xgb
+from sklearn.base import BaseEstimator
+if hasattr(xgb.XGBClassifier, '__sklearn_tags__'):
+    _old_tags = xgb.XGBClassifier.__sklearn_tags__
+    def _safe_tags(self):
+        try:
+            return _old_tags(self)
+        except AttributeError as e:
+            if "'super' object has no attribute '__sklearn_tags__'" in str(e):
+                return BaseEstimator.__sklearn_tags__(self)
+            raise
+    xgb.XGBClassifier.__sklearn_tags__ = _safe_tags
+    xgb.XGBRegressor.__sklearn_tags__ = _safe_tags
+
 app = FastAPI(title="EnergiAI ML Ensamble (4 Modelos)", version="1.0.0")
 
 # Modelos ya no se descargan de la nube, se usan los locales
