@@ -145,15 +145,43 @@ def predecir_con_tiempo(modelo, data: EnergyRequest, nombre_modelo):
         logger.info(f"[{nombre_modelo}] Probabilidades: {prob_rounded}")
     except Exception as e:
         logger.warning(f"[{nombre_modelo}] predict_proba falló: {e}")
-        proba = [0, 0, 0] # fallback
+        if "'super' object has no attribute '__sklearn_tags__'" in str(e) and hasattr(modelo, "steps"):
+            logger.info(f"[{nombre_modelo}] Intentando bypass de Pipeline...")
+            try:
+                X_trans = df_to_predict
+                for name, step in modelo.steps[:-1]:
+                    X_trans = step.transform(X_trans)
+                final_model = modelo.steps[-1][1]
+                proba = final_model.predict_proba(X_trans)[0]
+                prob_rounded = [round(p, 4) for p in proba]
+                logger.info(f"[{nombre_modelo}] Probabilidades (Bypass): {prob_rounded}")
+            except Exception as e2:
+                logger.warning(f"[{nombre_modelo}] Bypass falló: {e2}")
+                proba = [0, 0, 0]
+        else:
+            proba = [0, 0, 0] # fallback
         
     try:
         prediccion = int(modelo.predict(df_to_predict)[0])
     except Exception as e:
         logger.warning(f"[{nombre_modelo}] predict falló: {e}")
-        prediccion = 1
+        if "'super' object has no attribute '__sklearn_tags__'" in str(e) and hasattr(modelo, "steps"):
+            try:
+                X_trans = df_to_predict
+                for name, step in modelo.steps[:-1]:
+                    X_trans = step.transform(X_trans)
+                final_model = modelo.steps[-1][1]
+                prediccion = int(final_model.predict(X_trans)[0])
+                logger.info(f"[{nombre_modelo}] Predicción (Bypass): {prediccion}")
+            except Exception as e2:
+                prediccion = None
+        else:
+            prediccion = None
         
-    logger.info(f"[{nombre_modelo}] Predicción: {prediccion} ({TARGET_MAPPING.get(prediccion, 'Desconocido')})")
+    if prediccion is not None:
+        logger.info(f"[{nombre_modelo}] Predicción: {prediccion} ({TARGET_MAPPING.get(prediccion, 'Desconocido')})")
+    else:
+        logger.info(f"[{nombre_modelo}] Predicción descartada por error.")
     
     probabilidad = float(proba[prediccion]) if len(proba) > prediccion else 0.0
     duracion_ms = (time.time() - t0) * 1000
@@ -184,8 +212,15 @@ def predict_ensamble(data: EnergyRequest):
     # ==========================================
     # 7. VOTACIÓN POR MAYORÍA + DESEMPATE
     # ==========================================
-    votos = [pred_xgb, pred_logreg, pred_knn, pred_rf]
-    conteo = Counter(votos)
+    votos_completos = [pred_xgb, pred_logreg, pred_knn, pred_rf]
+    votos_validos = [v for v in votos_completos if v is not None]
+    
+    if not votos_validos:
+        # Fallback de emergencia absoluta
+        logger.error("Todos los modelos fallaron. Devolviendo Moderado por defecto.")
+        return {"categoria": "Moderado", "probabilidad": 0.0, "detalles": {"metodo_decision": "Fallback de emergencia"}}
+
+    conteo = Counter(votos_validos)
     mas_votados = conteo.most_common()
 
     probabilidades_por_prediccion = {
@@ -196,11 +231,16 @@ def predict_ensamble(data: EnergyRequest):
     }
 
     if len(mas_votados) > 1 and mas_votados[0][1] == mas_votados[1][1]:
-        prediccion_final = pred_xgb
-        metodo = f"Desempate por modelo principal XGBoost ({mas_votados[0][1]} vs {mas_votados[1][1]})"
+        # Hay un empate
+        if pred_xgb is not None and (mas_votados[0][0] == pred_xgb or mas_votados[1][0] == pred_xgb):
+            prediccion_final = pred_xgb
+            metodo = f"Desempate por modelo principal XGBoost ({mas_votados[0][1]} vs {mas_votados[1][1]})"
+        else:
+            prediccion_final = mas_votados[0][0]
+            metodo = f"Desempate aleatorio/primero ({mas_votados[0][1]} vs {mas_votados[1][1]})"
     else:
         prediccion_final = mas_votados[0][0]
-        metodo = f"Consenso por mayoría ({mas_votados[0][1]}/4 votos)"
+        metodo = f"Consenso por mayoría ({mas_votados[0][1]}/{len(votos_validos)} votos)"
 
     probabilidad_final = probabilidades_por_prediccion[prediccion_final]
 
