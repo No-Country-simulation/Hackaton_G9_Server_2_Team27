@@ -16,9 +16,18 @@ export default function MainLayout({ children }) {
     const storedSessionId = localStorage.getItem('telegramSessionId');
     const isLinked = localStorage.getItem('telegramLinked') === 'true';
 
-    if (isLinked) {
+    if (isLinked && storedSessionId) {
       setTelegramStatus('linked');
       setSessionId(storedSessionId);
+      
+      // Verificar silenciosamente si el backend aún tiene la sesión (ej. tras reinicio)
+      consultarVinculacionTelegram(storedSessionId).then(valid => {
+        if (!valid) {
+          setTelegramStatus('unlinked');
+          localStorage.removeItem('telegramLinked');
+          localStorage.removeItem('telegramSessionId');
+        }
+      }).catch(() => {});
     } else if (storedSessionId) {
       setTelegramStatus('pending');
       setSessionId(storedSessionId);

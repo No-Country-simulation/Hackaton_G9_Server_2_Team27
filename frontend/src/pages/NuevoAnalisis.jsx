@@ -74,7 +74,14 @@ export default function NuevoAnalisis() {
       
       if (isLinked && sessionId) {
         // Enviar notificación en background sin bloquear la UI
-        notificarTelegram(sessionId, responseDTO).catch(err => 
+        notificarTelegram(sessionId, responseDTO).then(success => {
+          if (!success) {
+            console.warn('La sesión de Telegram ya no es válida. Desvinculando localmente...');
+            localStorage.removeItem('telegramLinked');
+            localStorage.removeItem('telegramSessionId');
+            // Opcional: Podrías disparar un evento o actualizar estado si tuvieras uno aquí
+          }
+        }).catch(err => 
           console.error('Error al notificar por Telegram:', err)
         );
       }

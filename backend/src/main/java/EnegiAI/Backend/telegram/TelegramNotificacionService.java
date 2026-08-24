@@ -65,13 +65,22 @@ public class TelegramNotificacionService {
         StringBuilder sb = new StringBuilder();
         sb.append("🧾 *Factura de Análisis Energético — EnergiAI*\n");
         sb.append("_").append(fecha).append("_\n\n");
-        sb.append("*Categoría:* ").append(analisis.categoria().categoria()).append("\n");
+        sb.append("*Categoría:* ").append(escaparMarkdown(analisis.categoria().categoria())).append("\n");
         sb.append("*Probabilidad:* ").append(analisis.categoria().probabilidad()).append("\n");
         sb.append("*Costo estimado mensual:* $").append(analisis.estimacionFinanciera().costoEstimadoMensual()).append("\n\n");
         sb.append("*Recomendaciones:*\n");
-        analisis.recomendaciones().recomendaciones().forEach(r -> sb.append("• ").append(r).append("\n"));
+        analisis.recomendaciones().recomendaciones().forEach(r -> sb.append("• ").append(escaparMarkdown(r)).append("\n"));
         sb.append("\n_Gracias por usar EnergiAI._");
 
         return sb.toString();
+    }
+
+    private String escaparMarkdown(String texto) {
+        if (texto == null) return "";
+        return texto.replace("_", "\\_")
+                    .replace("*", "\\*")
+                    .replace("[", "\\[")
+                    .replace("]", "\\]")
+                    .replace("`", "\\`");
     }
 }
